@@ -116,37 +116,22 @@ else:
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
 
     with tabs[0]:
-        if df.at[user_idx, 'Last_Active'] != today_str:
-            df.at[user_idx, 'Today_Jaap'] = 0
-            df.at[user_idx, 'Last_Active'] = today_str
-            save_db(df)
-
+        # आज का जाप डेटाबेस से लें
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
+        
+        # गणना: कितनी पूरी माला और कितने एक्स्ट्रा जाप
+        mala_count = today_jap // 108
+        rem_jaap = today_jap % 108
+        
+        # --- यहाँ Metric Box का कोड है ---
         st.markdown(f"""
         <div class="metric-box">
-            <h2 style='color:#FF4D00; margin:0;'>{(today_jap/108):.2f} माला</h2>
+            <h2 style='color:#FF4D00; margin:0;'>{mala_count} माला {rem_jaap} जाप</h2>
             <p style='color:#666; font-weight: bold;'>आज की कुल सेवा</p>
+            <small style='color:#999;'>कुल जाप संख्या: {today_jap}</small>
         </div>
         """, unsafe_allow_html=True)
-
-        st.divider()
-        val = st.number_input("माला संख्या (1 माला = 108 जाप):", min_value=0.0, step=1.0)
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("➕ जोड़ें", use_container_width=True):
-                df.at[user_idx, 'Total_Jaap'] += (val * 108)
-                df.at[user_idx, 'Today_Jaap'] += (val * 108)
-                save_db(df)
-                st.rerun()
-        with c2:
-            if st.button("✏️ सुधारें", use_container_width=True):
-                new_j = val * 108
-                df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_j
-                df.at[user_idx, 'Today_Jaap'] = new_j
-                save_db(df)
-                st.rerun()
-
+        # --------------------------------
     with tabs[1]:
         st.subheader("🏆 आज के टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
@@ -184,5 +169,6 @@ if st.session_state.user_session in ADMIN_NUMBERS:
         # आप यहाँ अपना Excel डाउनलोड बटन भी रख सकते हैं
         csv = df.to_csv(index=False).encode('utf-8-sig')
         st.download_button("📥 डेटा एक्सेल डाउनलोड", data=csv, file_name='ram_data.csv')
+
 
 
