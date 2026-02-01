@@ -14,11 +14,16 @@ MSG_FILE = "broadcast_msg.txt"
 ADMIN_NUMBERS = ["9987621091", "8169513359"] 
 SANKALP_TARGET = 1100000 
 
-# 2026 एकादशी तिथियां
-EKADASHI_2026 = [
-    "2026-01-14", "2026-01-29", "2026-02-13", "2026-02-27",
-    "2026-03-15", "2026-03-29", "2026-04-13", "2026-04-27",
-    "2026-11-05", "2026-11-21", "2026-12-04", "2026-12-20"
+# 2026 एकादशी एवं त्यौहार तिथियां
+EVENTS_2026 = [
+    ("14 Jan", "मकर संक्रांति", "सूर्य उत्तरायण प्रवेश"),
+    ("14 Jan", "षटतिला एकादशी", "पापनाशिनी एकादशी"),
+    ("28 Feb", "आमलकी एकादशी", "आंवला वृक्ष पूजन"),
+    ("27 Mar", "राम नवमी", "प्रभु श्री राम जन्मोत्सव"),
+    ("02 Apr", "हनुमान जयंती", "बजरंगबली जन्मोत्सव"),
+    ("14 Apr", "वरुथिनी एकादशी", "सौभाग्य प्रदायिनी"),
+    ("09 Nov", "दीपावली", "अयोध्या दीपोत्सव महापर्व"),
+    ("20 Dec", "मोक्षदा एकादशी", "गीता जयंती एवं मोक्षदा")
 ]
 
 def load_db():
@@ -51,26 +56,37 @@ def get_user_location():
         return f"{data.get('city', 'Unknown')}, {data.get('region', 'Unknown')}"
     except: return "India"
 
-# --- PREMIUM UI CSS ---
+# --- PREMIUM INTERACTIVE UI CSS ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
     .app-header {
         background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
-        color: white !important; padding: 2rem 1rem; border-radius: 0 0 50px 50px;
+        color: white !important; padding: 2.5rem 1rem; border-radius: 0 0 50px 50px;
         text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
     }
     .metric-box {
-        background: white; padding: 25px; border-radius: 20px; text-align: center;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid #FFD700; margin-bottom: 20px;
+        background: white; padding: 30px; border-radius: 20px; text-align: center;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 6px solid #FFD700; margin-bottom: 20px;
     }
+    /* CALENDAR GRID */
+    .cal-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 15px 0; }
+    .cal-card {
+        width: 85px; height: 85px; background: white; border: 1.5px solid #FF9933;
+        border-radius: 15px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; position: relative; transition: 0.3s;
+    }
+    .cal-card:hover { background: #FF4D00 !important; transform: scale(1.1); z-index: 10; cursor: pointer; }
+    .cal-card:hover b { color: white !important; }
+    .tooltip {
+        visibility: hidden; width: 160px; background: #3e2723; color: white !important;
+        text-align: center; border-radius: 8px; padding: 8px; position: absolute;
+        bottom: 115%; left: 50%; margin-left: -80px; opacity: 0; transition: 0.3s; font-size: 10px;
+    }
+    .cal-card:hover .tooltip { visibility: visible; opacity: 1; }
     .ekadashi-banner {
-        background: #FFD700; padding: 15px; border-radius: 12px; border-left: 6px solid #FF4D00;
+        background: #FFD700; padding: 15px; border-radius: 15px; border-left: 8px solid #FF4D00;
         text-align: center; font-weight: bold; color: #5D4037; margin-bottom: 20px;
-    }
-    .wa-btn {
-        display: inline-block; padding: 6px 12px; background-color: #25D366;
-        color: white !important; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -81,16 +97,15 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- 1. LOGIN SCREEN WITH STRICT SECURITY ---
+# --- 1. STRICT LOGIN SECTION ---
 if st.session_state.user_session is None:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
-    st.write("### 🙏 भक्त प्रवेश")
-    u_name = st.text_input("आपका पावन नाम लिखें").strip()
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>प्रमाणित जाप सेवा</div></div>', unsafe_allow_html=True)
+    u_name = st.text_input("आपका पावन नाम").strip()
     u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10).strip()
     
     if st.button("दिव्य प्रवेश करें", use_container_width=True):
-        if not u_name or len(u_phone) != 10 or not u_phone.isdigit():
-            st.error("❌ कृपया सही नाम और 10 अंकों का नंबर भरें।")
+        if not u_name or len(u_phone) != 10:
+            st.error("❌ कृपया सही नाम और नंबर भरें।")
         else:
             if u_phone in df['Phone'].values:
                 existing_name = df[df['Phone'] == u_phone]['Name'].values[0]
@@ -100,7 +115,7 @@ if st.session_state.user_session is None:
                     st.session_state.user_session = u_phone
                     st.rerun()
             elif u_name.lower() in df['Name'].str.lower().values:
-                st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है। पुराना नंबर उपयोग करें।")
+                st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है।")
             else:
                 loc = get_user_location()
                 st.session_state.user_session = u_phone
@@ -109,18 +124,15 @@ if st.session_state.user_session is None:
                 save_db(df)
                 st.rerun()
 
-# --- 2. MAIN DASHBOARD ---
+# --- 2. DASHBOARD SECTION ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
 
-    # Automatic Ekadashi Message
-    if today_str in EKADASHI_2026:
-        st.markdown('<div class="ekadashi-banner">🙏 आज पावन एकादशी है। अपनी माला सेवा रिकॉर्ड करना न भूलें! 🚩</div>', unsafe_allow_html=True)
-
-    # Broadcast Message
-    b_msg = get_broadcast()
-    if b_msg: st.info(f"📢 संदेश: {b_msg}")
+    # Ekadashi Check
+    ekadashi_dates = ["2026-01-14", "2026-02-13", "2026-02-27", "2026-03-29"] # List can be expanded
+    if today_str in ekadashi_dates:
+        st.markdown('<div class="ekadashi-banner">📢 आज पावन एकादशी है! अपनी सेवा रिकॉर्ड करना न भूलें। 🙏</div>', unsafe_allow_html=True)
 
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
 
@@ -130,33 +142,30 @@ else:
             df.at[user_idx, 'Last_Active'] = today_str
             save_db(df)
 
-        # MALA + JAAP CALCULATION
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
-        m_display = today_jap // 108
-        j_display = today_jap % 108
         
+        # Metric Box: No Jaap count on top, only Mala
         st.markdown(f"""
         <div class="metric-box">
-            <h2 style='color:#FF4D00; margin:0;'>{m_display} माला {j_display} जाप</h2>
+            <h2 style='color:#FF4D00; margin:0;'>{today_jap // 108} माला {today_jap % 108} जाप</h2>
             <p style='color:#666; font-weight: bold;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
-        st.divider()
-        mode = st.radio("अपडेट मोड:", ["माला (108 जाप)", "जाप संख्या"], horizontal=True)
-        val = st.number_input("संख्या लिखें:", min_value=0, step=1)
+        mode = st.radio("अपडेट मोड:", ["माला", "जाप"], horizontal=True)
+        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1)
         
         c1, c2 = st.columns(2)
         with c1:
-            if st.button("➕ जोड़ें (Add)", use_container_width=True):
-                added = val * 108 if "माला" in mode else val
+            if st.button("➕ जोड़ें", use_container_width=True):
+                added = val * 108 if mode == "माला" else val
                 df.at[user_idx, 'Total_Jaap'] += added
                 df.at[user_idx, 'Today_Jaap'] += added
                 save_db(df)
                 st.rerun()
         with c2:
             if st.button("✏️ सुधारें (Edit)", use_container_width=True):
-                new_v = val * 108 if "माला" in mode else val
+                new_v = val * 108 if mode == "माला" else val
                 df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_v
                 df.at[user_idx, 'Today_Jaap'] = new_v
                 save_db(df)
@@ -166,33 +175,29 @@ else:
         st.subheader("🏆 आज के टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Jaap'] // 108} माला {row['Today_Jaap'] % 108} जाप")
+            st.write(f"#{i+1} {row['Name']} — {row['Today_Jaap'] // 108} माला")
 
     with tabs[2]:
-        st.subheader("📅 उत्सव कैलेंडर 2026")
-        events = [("14 Jan", "मकर संक्रांति"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी"), ("02 Apr", "हनुमान जयंती")]
-        for d, n in events: st.info(f"🚩 {d} — {n}")
+        st.subheader("📅 पावन उत्सव ग्रिड 2026")
+        grid_html = '<div class="cal-grid">'
+        for d, n, desc in EVENTS_2026:
+            grid_html += f'<div class="cal-card"><b>{d}</b><div class="tooltip"><b>{n}</b><br>{desc}</div></div>'
+        grid_html += '</div>'
+        st.markdown(grid_html, unsafe_allow_html=True)
 
-    # --- 3. ADMIN PANEL IN SIDEBAR ---
+    # ADMIN PANEL
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
             st.subheader("⚙️ एडमिन कंट्रोल")
-            # Delete User
             u_list = ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")")
-            target = st.selectbox("हटाने के लिए चुनें:", u_list)
-            if target != "--चुनें--" and st.button("🗑️ भक्त डिलीट करें"):
+            target = st.selectbox("डिलीट यूजर:", u_list)
+            if target != "--चुनें--" and st.button("🗑️ डिलीट करें"):
                 df = df[df['Phone'] != target.split("(")[1].replace(")", "")]
                 save_db(df)
                 st.rerun()
-            
-            st.divider()
-            # Broadcast Message
-            new_m = st.text_area("ब्रॉडकास्ट संदेश:", value=b_msg)
-            if st.button("📢 अपडेट संदेश"): save_broadcast(new_m); st.rerun()
-            
             st.divider()
             csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 एक्सेल डाउनलोड", data=csv, file_name='ram_data.csv')
+            st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv')
 
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
