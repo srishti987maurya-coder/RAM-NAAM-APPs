@@ -126,11 +126,11 @@ else:
             st.info("आज की सेवा अभी शुरू होनी है।")
 
     # TAB 3: CALENDAR
-    # टैब 3: कैलेंडर (Interative Hover Calendar)
+    # टैब 3: पावन कैलेंडर (Interactive Hover Design)
     with tabs[2]:
         st.subheader("📅 पावन वार्षिक कैलेंडर 2026")
         
-        # कैलेंडर डेटा: तारीख, त्योहार और उसका महत्व
+        # कैलेंडर डेटा
         holy_events = {
             "2026-01-14": {"event": "षटतिला एकादशी", "desc": "तिल के दान और भगवान विष्णु की पूजा का दिन।"},
             "2026-02-15": {"event": "महाशिवरात्रि", "desc": "भगवान शिव और माता पार्वती के मिलन का महापर्व।"},
@@ -141,48 +141,91 @@ else:
             "2026-11-09": {"event": "दीपावली", "desc": "श्री राम के अयोध्या आगमन पर दीपों का उत्सव।"}
         }
 
+        # CSS for Hover Effect and Grid
         st.markdown("""
             <style>
-            .cal-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-            .cal-day {
-                width: 80px; height: 80px; background: white; 
-                border: 2px solid #FF9933; border-radius: 15px;
-                display: flex; flex-direction: column; align-items: center;
-                justify-content: center; position: relative; cursor: pointer;
-                transition: 0.3s;
+            .cal-container { 
+                display: flex; 
+                flex-wrap: wrap; 
+                gap: 15px; 
+                justify-content: center; 
+                padding: 10px;
             }
-            .cal-day:hover { background: #FF4D00; color: white !important; transform: scale(1.1); }
-            .cal-day:hover .tooltip { visibility: visible; opacity: 1; }
+            .cal-day {
+                width: 90px; height: 90px; 
+                background: #ffffff; 
+                border: 2px solid #FF9933; 
+                border-radius: 18px;
+                display: flex; flex-direction: column; 
+                align-items: center; justify-content: center; 
+                position: relative; cursor: pointer;
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            }
+            .cal-day:hover { 
+                background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%); 
+                color: white !important; 
+                transform: scale(1.15);
+                z-index: 5;
+                box-shadow: 0 8px 16px rgba(255, 77, 0, 0.3);
+            }
+            .cal-day span { color: inherit; transition: color 0.3s; }
+            
+            /* Tooltip Style */
             .tooltip {
-                visibility: hidden; width: 160px; background-color: #3e2723;
-                color: #fff !important; text-align: center; border-radius: 6px;
-                padding: 8px; position: absolute; z-index: 10;
-                bottom: 110%; left: 50%; margin-left: -80px;
-                opacity: 0; transition: opacity 0.3s; font-size: 12px;
-                box-shadow: 0px 5px 10px rgba(0,0,0,0.2);
+                visibility: hidden; width: 180px; 
+                background-color: #3e2723;
+                color: #ffffff !important; text-align: center; 
+                border-radius: 10px; padding: 10px;
+                position: absolute; z-index: 100;
+                bottom: 115%; left: 50%; 
+                margin-left: -90px;
+                opacity: 0; transition: opacity 0.4s, transform 0.4s;
+                font-size: 13px; line-height: 1.4;
+                box-shadow: 0px 10px 20px rgba(0,0,0,0.3);
+                pointer-events: none;
+            }
+            .cal-day:hover .tooltip { 
+                visibility: visible; 
+                opacity: 1;
+                transform: translateY(-5px);
+            }
+            /* Tooltip Arrow */
+            .tooltip::after {
+                content: ""; position: absolute;
+                top: 100%; left: 50%; margin-left: -8px;
+                border-width: 8px; border-style: solid;
+                border-color: #3e2723 transparent transparent transparent;
             }
             </style>
         """, unsafe_allow_html=True)
 
-        st.write("नीचे दी गई तिथियों पर माउस ले जाएँ (Hover करें):")
+        st.markdown("<p style='text-align:center;'>तिथियों पर माउस ले जाएँ (Hover करें) महत्व जानने के लिए:</p>", unsafe_allow_html=True)
         
-        # ग्रिड बनाना
+        # HTML Grid Generation
         html_code = '<div class="cal-container">'
-        for date_str, info in holy_events.items():
+        # Sorting dates
+        sorted_dates = sorted(holy_events.keys())
+        
+        for date_str in sorted_dates:
+            info = holy_events[date_str]
             d = datetime.strptime(date_str, "%Y-%m-%d")
-            day_name = d.strftime("%d %b")
+            day_display = d.strftime("%d %b")
+            
             html_code += f'''
             <div class="cal-day">
-                <span style="font-weight:bold;">{day_name}</span>
-                <span style="font-size:10px;">2026</span>
-                <div class="tooltip"><b>{info['event']}</b><br>{info['desc']}</div>
+                <span style="font-weight:bold; font-size:16px;">{day_display}</span>
+                <span style="font-size:11px; opacity:0.8;">2026</span>
+                <div class="tooltip">
+                    <b style="color:#FFD700;">{info['event']}</b><br>
+                    <hr style="margin:5px 0; border:0.5px solid rgba(255,255,255,0.2);">
+                    {info['desc']}
+                </div>
             </div>
             '''
         html_code += '</div>'
         
         st.markdown(html_code, unsafe_allow_html=True)
-        st.markdown("<br><p style='text-align:center; font-size:12px;'>भविष्य में यहाँ पूरे महीने का कैलेंडर जोड़ा जाएगा।</p>", unsafe_allow_html=True)
-
     # TAB 4: ADMIN
     if st.session_state.user_session == ADMIN_NUMBER:
         with tabs[3]:
@@ -194,4 +237,5 @@ else:
     if st.sidebar.button("लॉगआउट"):
         st.session_state.user_session = None
         st.rerun()
+
 
