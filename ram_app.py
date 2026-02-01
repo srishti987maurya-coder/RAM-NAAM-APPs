@@ -3,7 +3,11 @@ import pandas as pd
 import os
 import random
 from datetime import datetime
+import requests
 import urllib.parse
+
+# --- CONFIGURATION ---
+API_KEY = "YOUR_FAST2SMS_API_KEY"  # यहाँ अपनी Fast2SMS API Key डालें
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="श्री राम धाम", page_icon="🚩", layout="centered")
@@ -13,38 +17,33 @@ DB_FILE = "ram_seva_data.csv"
 ADMIN_NUMBERS = ["9987621091", "8169513359"] 
 
 def load_db():
-    required = ["Phone", "Name", "Total_Counts", "Last_Active", "Today_Count", "Location"]
     if os.path.exists(DB_FILE):
-        try:
-            df = pd.read_csv(DB_FILE, dtype={'Phone': str})
-            for col in required:
-                if col not in df.columns:
-                    df[col] = 0 if "Count" in col else "India"
-            return df
-        except: pass
-    return pd.DataFrame(columns=required)
+        return pd.read_csv(DB_FILE, dtype={'Phone': str})
+    return pd.DataFrame(columns=["Phone", "Name", "Total_Counts", "Last_Active", "Today_Count", "Location"])
 
 def save_db(df):
     df.to_csv(DB_FILE, index=False)
 
-# --- UI STYLING ---
+def send_otp_sms(phone, otp):
+    url = "https://www.fast2sms.com/dev/bulkV2"
+    payload = {
+        "variables_values": otp,
+        "route": "otp",
+        "numbers": phone,
+    }
+    headers = {"authorization": API_KEY}
+    response = requests.get(url, headers=headers, params=payload)
+    return response.json()
+
+# --- CSS STYLING ---
 st.markdown("""
     <style>
-    .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
+    .stApp { background: #FFF5E6; }
     .app-header {
-        background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
-        color: white !important; padding: 2.5rem 1rem; border-radius: 0 0 50px 50px;
-        text-align: center; margin: -1rem -1rem 2rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
+        background: linear-gradient(135deg, #FF4D00, #FF9933);
+        color: white; padding: 2rem; border-radius: 0 0 40px 40px; text-align: center; margin-bottom: 2rem;
     }
-    .otp-display {
-        background: #FFF9C4; padding: 15px; border-radius: 10px;
-        border: 2px dashed #FBC02D; text-align: center; font-size: 1.5rem;
-        font-weight: bold; color: #5D4037; margin: 10px 0;
-    }
-    .wa-btn {
-        display: inline-block; padding: 6px 12px; background-color: #25D366;
-        color: white !important; text-decoration: none; border-radius: 50px; font-weight: bold;
-    }
+    .stButton>button { background: #FF4D00; color: white; border-radius: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -52,111 +51,80 @@ df = load_db()
 today_str = datetime.now().strftime("%Y-%m-%d")
 
 # --- SESSION STATES ---
-if 'user_session' not in st.session_state:
-    st.session_state.user_session = None
-if 'system_otp' not in st.session_state:
-    st.session_state.system_otp = None
-if 'step' not in st.session_state:
-    st.session_state.step = "login"
+if 'user_session' not in st.session_state: st.session_state.user_session = None
+if 'otp_step' not in st.session_state: st.session_state.otp_step = "get_phone"
+if 'generated_otp' not in st.session_state: st.session_state.generated_otp = None
 
-# --- LOGIN & OTP LOGIC ---
+# --- AUTHENTICATION UI ---
 if st.session_state.user_session is None:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>प्रमाणित भक्ति प्रवेश</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>SMS OTP सत्यापन</div></div>', unsafe_allow_html=True)
     
-    if st.session_state.step == "login":
-        st.write("### 🙏 लॉगिन करें")
-        u_name = st.text_input("आपका नाम")
+    if st.session_state.otp_step == "get_phone":
+        u_name = st.text_input("आपका पावन नाम")
         u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10)
         
-        if st.button("OTP जेनरेट करें", use_container_width=True):
-            if u_name and len(u_phone) == 10 and u_phone.isdigit():
-                st.session_state.system_otp = str(random.randint(100000, 999999))
-                st.session_state.temp_name = u_name
-                st.session_state.temp_phone = u_phone
-                st.session_state.step = "verify"
-                st.rerun()
+        if st.button("OTP प्राप्त करें", use_container_width=True):
+            if len(u_phone) == 10 and u_phone.isdigit():
+                otp = str(random.randint(1000, 9999))
+                res = send_otp_sms(u_phone, otp)
+                
+                if res.get("return"):
+                    st.session_state.generated_otp = otp
+                    st.session_state.temp_phone = u_phone
+                    st.session_state.temp_name = u_name
+                    st.session_state.otp_step = "verify_otp"
+                    st.rerun()
+                else:
+                    st.error("SMS भेजने में विफल। कृपया API Key या बैलेंस चेक करें।")
             else:
-                st.error("कृपया सही नाम और 10 अंकों का नंबर डालें।")
+                st.error("सही 10 अंकों का नंबर डालें।")
 
-    elif st.session_state.step == "verify":
-        st.write("### 🔐 सुरक्षा सत्यापन")
-        st.markdown(f"""
-            <div class='otp-display'>
-                आपका दिव्य कोड: {st.session_state.system_otp}
-            </div>
-        """, unsafe_allow_html=True)
+    elif st.session_state.otp_step == "verify_otp":
+        st.info(f"OTP आपके नंबर {st.session_state.temp_phone} पर भेजा गया है।")
+        user_otp = st.text_input("4-अंकों का OTP दर्ज करें", max_chars=4)
         
-        user_otp = st.text_input("ऊपर दिया गया 6-अंकों का कोड यहाँ भरें", max_chars=6)
-        
-        if st.button("सत्यापन पूर्ण करें", use_container_width=True):
-            if user_otp == st.session_state.system_otp:
+        if st.button("सत्यापित करें", use_container_width=True):
+            if user_otp == st.session_state.generated_otp:
                 st.session_state.user_session = st.session_state.temp_phone
                 if st.session_state.temp_phone not in df['Phone'].values:
                     new_user = pd.DataFrame([[st.session_state.temp_phone, st.session_state.temp_name, 0, today_str, 0, "India"]], columns=df.columns)
                     df = pd.concat([df, new_user], ignore_index=True)
                     save_db(df)
-                st.success("प्रमाणन सफल! जय श्री राम।")
+                st.success("सत्यापन सफल!")
                 st.rerun()
             else:
-                st.error("गलत कोड! कृपया सही कोड दर्ज करें।")
+                st.error("गलत OTP!")
         
-        if st.button("⬅️ वापस जाएं"):
-            st.session_state.step = "login"
+        if st.button("नंबर बदलें"):
+            st.session_state.otp_step = "get_phone"
             st.rerun()
 
-# --- MAIN APP (LoggedIn) ---
+# --- MAIN APP ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
-
+    
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
-
+    
     with tabs[0]:
         today_total = int(df.at[user_idx, 'Today_Count'])
-        st.metric("आज का जाप", f"{today_total}")
-        val = st.number_input("माला संख्या (1 माला = 108):", min_value=0, step=1, value=(today_total // 108))
-        if st.button("✅ अपडेट करें", use_container_width=True):
-            new_jap = val * 108
-            df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - today_total) + new_jap
-            df.at[user_idx, 'Today_Count'] = new_jap
-            df.at[user_idx, 'Last_Active'] = today_str
+        st.metric("आज का जाप", today_total)
+        val = st.number_input("माला (108 जाप):", min_value=0, step=1)
+        if st.button("Update"):
+            df.at[user_idx, 'Today_Count'] += (val * 108)
+            df.at[user_idx, 'Total_Counts'] += (val * 108)
             save_db(df)
             st.rerun()
 
     with tabs[1]:
         st.subheader("🏆 टॉप सेवक")
-        leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Count", ascending=False).head(10)
-        for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Count'] // 108} माला")
+        st.table(df[['Name', 'Total_Counts']].sort_values('Total_Counts', ascending=False).head(10))
 
     with tabs[2]:
-        # --- FULL CALENDAR RESTORED ---
-        st.subheader("📅 पावन कैलेंडर 2026")
-        events = [
-            ("14 Jan", "मकर संक्रांति"), ("15 Feb", "महाशिवरात्रि"), 
-            ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी"),
-            ("02 Apr", "हनुमान जयंती"), ("09 Nov", "दीपावली")
-        ]
-        grid_html = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
-        for d, n in events:
-            grid_html += f'<div style="background:white; border:1px solid #FF9933; padding:10px; border-radius:10px; width:100px; text-align:center;"><b>{d}</b><br><small>{n}</small></div>'
-        grid_html += '</div>'
-        st.markdown(grid_html, unsafe_allow_html=True)
-
-    # --- ADMIN WHATSAPP CONTROL ---
-    if st.session_state.user_session in ADMIN_NUMBERS:
-        with st.sidebar:
-            st.subheader("⚙️ एडमिन")
-            for i, row in df.iterrows():
-                if row['Phone'] not in ADMIN_NUMBERS:
-                    msg = f"प्रणाम {row['Name']} जी, आज एकादशी है। माला पूर्ण करें। धन्यवाद!"
-                    wa_url = f"https://wa.me/91{row['Phone']}?text={urllib.parse.quote(msg)}"
-                    st.markdown(f"{row['Name']}: <a href='{wa_url}' class='wa-btn' target='_blank'>WA</a>", unsafe_allow_html=True)
-            
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv')
+        st.subheader("📅 उत्सव 2026")
+        events = [("27 Mar", "राम नवमी"), ("02 Apr", "हनुमान जयंती"), ("09 Nov", "दीपावली")]
+        for d, e in events: st.write(f"🚩 {d}: {e}")
 
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
-        st.session_state.step = "login"
         st.rerun()
