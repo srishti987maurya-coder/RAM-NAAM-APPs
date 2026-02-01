@@ -10,7 +10,6 @@ st.set_page_config(page_title="श्री राम धाम", page_icon="�
 
 # --- DATABASE & CONFIG ---
 DB_FILE = "ram_seva_data.csv"
-MSG_FILE = "broadcast_msg.txt"
 ADMIN_NUMBERS = ["9987621091", "8169513359"] 
 
 # 2026 एकादशी एवं त्यौहार तिथियां
@@ -22,7 +21,6 @@ EVENTS_2026 = [
 ]
 
 def load_db():
-    # बैकएंड में माला और जाप दोनों के कॉलम रखे गए हैं
     cols = ["Phone", "Name", "Total_Mala", "Total_Jaap", "Last_Active", "Today_Mala", "Today_Jaap", "Location"]
     if os.path.exists(DB_FILE):
         try:
@@ -124,44 +122,53 @@ else:
             df.at[user_idx, 'Last_Active'] = today_str
             save_db(df)
 
-        today_mala = int(df.at[user_idx, 'Today_Mala'])
+        current_jaap = int(df.at[user_idx, 'Today_Jaap'])
+        current_mala = current_jaap // 108
+        rem_jaap = current_jaap % 108
         
-        # Display: Keep ONLY Mala count as per request
+        # Display: Keep ONLY Mala count big, Jaap small below
         st.markdown(f"""
         <div class="metric-box">
-            <h1 style='color:#FF4D00; margin:0; font-size: 3rem;'>{today_mala} माला</h1>
-            <p style='color:#666; font-weight: bold; font-size: 1.2rem;'>आज की कुल सेवा</p>
+            <h1 style='color:#FF4D00; margin:0; font-size: 3.5rem;'>{current_mala} माला</h1>
+            <h3 style='color:#FF9933; margin:0;'>{rem_jaap} जाप</h3>
+            <p style='color:#666; font-weight: bold; margin-top:10px;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
-        val = st.number_input("माला की संख्या दर्ज करें:", min_value=0, step=1)
+        mode = st.radio("इनपुट तरीका चुनें:", ["जाप संख्या (सीधा)", "माला (1 = 108)"], horizontal=True)
+        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1)
         
         c1, c2 = st.columns(2)
         with c1:
             if st.button("➕ सेवा जोड़ें", use_container_width=True):
-                # Back-end calculates both Mala and Jaap for Excel
-                df.at[user_idx, 'Today_Mala'] += val
-                df.at[user_idx, 'Today_Jaap'] += (val * 108)
-                df.at[user_idx, 'Total_Mala'] += val
-                df.at[user_idx, 'Total_Jaap'] += (val * 108)
+                added_jaap = val if mode == "जाप संख्या (सीधा)" else (val * 108)
+                added_mala = added_jaap // 108
+                
+                df.at[user_idx, 'Today_Jaap'] += added_jaap
+                df.at[user_idx, 'Today_Mala'] = df.at[user_idx, 'Today_Jaap'] // 108
+                df.at[user_idx, 'Total_Jaap'] += added_jaap
+                df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
+                
                 save_db(df)
                 st.rerun()
         with c2:
             if st.button("✏️ सुधार करें (Reset)", use_container_width=True):
-                # Reset today's and update total
-                old_today_mala = df.at[user_idx, 'Today_Mala']
-                df.at[user_idx, 'Total_Mala'] = (df.at[user_idx, 'Total_Mala'] - old_today_mala) + val
-                df.at[user_idx, 'Total_Jaap'] = df.at[user_idx, 'Total_Mala'] * 108
-                df.at[user_idx, 'Today_Mala'] = val
-                df.at[user_idx, 'Today_Jaap'] = val * 108
+                new_jaap = val if mode == "जाप संख्या (सीधा)" else (val * 108)
+                
+                # Update total by removing old today and adding new
+                df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - current_jaap) + new_jaap
+                df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
+                df.at[user_idx, 'Today_Jaap'] = new_jaap
+                df.at[user_idx, 'Today_Mala'] = new_jaap // 108
+                
                 save_db(df)
                 st.rerun()
 
     with tabs[1]:
         st.subheader("🏆 आज के टॉप सेवक")
-        leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Mala", ascending=False).head(10)
+        leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Mala']} माला")
+            st.write(f"#{i+1} {row['Name']} — {row['Today_Jaap'] // 108} माला {row['Today_Jaap'] % 108} जाप")
 
     with tabs[2]:
         st.subheader("📅 पावन उत्सव ग्रिड 2026")
