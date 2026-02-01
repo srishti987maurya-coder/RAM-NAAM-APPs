@@ -258,12 +258,115 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
     with tabs[2]:
-        st.subheader("📅 पावन उत्सव ग्रिड 2026")
-        grid_html = '<div class="cal-grid">'
-        for d, n, desc in EVENTS_2026:
-            grid_html += f'<div class="cal-card"><b>{d}</b><div class="tooltip"><b>{n}</b><br>{desc}</div></div>'
+        st.subheader("📅 पावन तिथि कैलेंडर - फरवरी 2026")
+        
+        # Calendar ka data (February 2026 example)
+        # Format: (Date_Number, Event_Name, Description)
+        month_days = [
+            (1, "", ""), (2, "", ""), (3, "", ""), (4, "", ""), (5, "", ""), (6, "", ""), (7, "", ""),
+            (8, "", ""), (9, "", ""), (10, "", ""), (11, "", ""), (12, "", ""), 
+            (13, "विजया एकादशी", "आज के दिन व्रत रखने से कार्यों में विजय प्राप्त होती है।"),
+            (14, "मकर संक्रांति / षटतिला एकादशी", "सूर्य उत्तरायण प्रवेश एवं पापनाशिनी एकादशी।"),
+            (15, "", ""), (16, "", ""), (17, "", ""), (18, "", ""), (19, "", ""), (20, "", ""), (21, "", ""),
+            (22, "", ""), (23, "", ""), (24, "", ""), (25, "", ""), (26, "", ""),
+            (27, "आमलकी एकादशी", "आंवले के वृक्ष का पूजन और मोक्ष प्रदायिनी तिथि।"),
+            (28, "महाशिवरात्रि", "भगवान शिव और माता पार्वती का पावन विवाह उत्सव।")
+        ]
+
+        # CSS for Real Calendar Grid
+        st.markdown("""
+            <style>
+            .calendar-wrapper {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 8px;
+                background: white;
+                padding: 15px;
+                border-radius: 20px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            }
+            .day-name {
+                text-align: center;
+                font-weight: bold;
+                color: #FF4D00;
+                padding-bottom: 10px;
+                font-size: 0.8rem;
+            }
+            .date-cell {
+                aspect-ratio: 1;
+                border: 1px solid #f0f0f0;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 500;
+                position: relative;
+                transition: 0.3s;
+                cursor: default;
+            }
+            .has-event {
+                background: #FFF5E6;
+                border: 1.5px solid #FF9933;
+                color: #FF4D00;
+                font-weight: bold;
+            }
+            .date-cell:hover {
+                transform: scale(1.1);
+                z-index: 5;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+            .has-event:hover {
+                background: #FF4D00 !important;
+                color: white !important;
+            }
+            .event-tip {
+                visibility: hidden;
+                width: 140px;
+                background: #3e2723;
+                color: white;
+                text-align: center;
+                border-radius: 8px;
+                padding: 8px;
+                position: absolute;
+                bottom: 125%;
+                left: 50%;
+                margin-left: -70px;
+                opacity: 0;
+                transition: 0.3s;
+                font-size: 11px;
+                z-index: 10;
+                line-height: 1.4;
+            }
+            .date-cell:hover .event-tip {
+                visibility: visible;
+                opacity: 1;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # Calendar Header (Days)
+        days_header = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        cols = st.columns(7)
+        for i, d in enumerate(days_header):
+            cols[i].markdown(f"<div class='day-name'>{d}</div>", unsafe_allow_html=True)
+
+        # Calendar Logic (Feb 2026 starts on Sunday)
+        # Hum pehle 6 khali box dalenge (Sun se start ho raha hai isliye)
+        grid_html = '<div class="calendar-wrapper">'
+        
+        # Adding empty cells for Feb 2026 (Starts on Sunday, so 6 empty slots)
+        for _ in range(6): 
+            grid_html += '<div class="date-cell" style="border:none;"></div>'
+            
+        for day, event, desc in month_days:
+            event_class = "has-event" if event else ""
+            tip = f'<div class="event-tip"><b>{event}</b><br>{desc}</div>' if event else ""
+            grid_html += f'<div class="date-cell {event_class}">{day}{tip}</div>'
+            
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
+        
+        st.caption("नोट: जिन तिथियों पर घेरा (Orange Border) है, उन पर माउस ले जाकर उनकी महिमा जानें।")
 
     # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
@@ -282,5 +385,6 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+
 
 
