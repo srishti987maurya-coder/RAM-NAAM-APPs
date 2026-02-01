@@ -78,7 +78,7 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- 1. LOGIN SECTION ---
+# --- 1. LOGIN SECTION (STRICT) ---
 if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>प्रमाणित जाप सेवा</div></div>', unsafe_allow_html=True)
     u_name = st.text_input("आपका पावन नाम लिखें").strip()
@@ -126,12 +126,12 @@ else:
         current_mala = current_jaap // 108
         rem_jaap = current_jaap % 108
         
-        # Display: Keep ONLY Mala count big, Jaap small below
+        # UI Fix: Only Mala big, Jaap small below as per image_2531fe.png
         st.markdown(f"""
         <div class="metric-box">
-            <h1 style='color:#FF4D00; margin:0; font-size: 3.5rem;'>{current_mala} माला</h1>
+            <h1 style='color:#FF4D00; margin:0; font-size: 4rem;'>{current_mala} माला</h1>
             <h3 style='color:#FF9933; margin:0;'>{rem_jaap} जाप</h3>
-            <p style='color:#666; font-weight: bold; margin-top:10px;'>आज की कुल सेवा</p>
+            <p style='color:#666; font-weight: bold; margin-top:15px;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -142,7 +142,6 @@ else:
         with c1:
             if st.button("➕ सेवा जोड़ें", use_container_width=True):
                 added_jaap = val if mode == "जाप संख्या (सीधा)" else (val * 108)
-                added_mala = added_jaap // 108
                 
                 df.at[user_idx, 'Today_Jaap'] += added_jaap
                 df.at[user_idx, 'Today_Mala'] = df.at[user_idx, 'Today_Jaap'] // 108
@@ -154,13 +153,10 @@ else:
         with c2:
             if st.button("✏️ सुधार करें (Reset)", use_container_width=True):
                 new_jaap = val if mode == "जाप संख्या (सीधा)" else (val * 108)
-                
-                # Update total by removing old today and adding new
                 df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - current_jaap) + new_jaap
                 df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
                 df.at[user_idx, 'Today_Jaap'] = new_jaap
                 df.at[user_idx, 'Today_Mala'] = new_jaap // 108
-                
                 save_db(df)
                 st.rerun()
 
@@ -178,10 +174,10 @@ else:
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
 
-    # ADMIN
+    # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
-            st.subheader("⚙️ एडमिन")
+            st.subheader("⚙️ एडमिन पैनल")
             u_list = ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")")
             target = st.selectbox("यूजर डिलीट करें:", u_list)
             if target != "--चुनें--" and st.button("🗑️ डिलीट"):
