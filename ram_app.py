@@ -41,7 +41,7 @@ def get_user_location():
 st.markdown("""
     <style>
     .stApp { background-color: #FFF5E6; }
-    .stMarkdown, p, label, span, li, div, h1, h2, h3 { color: #3e2723 !important; }
+    .stMarkdown, p, label, span, li, div, h1, h2, h3 { color: #3e2723 !important; font-family: 'Poppins', sans-serif; }
     
     .app-header {
         background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
@@ -50,39 +50,21 @@ st.markdown("""
         margin: -1rem -1rem 1rem -1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
     .app-header * { color: white !important; }
-
-    /* Calendar Styling Fix */
-    .cal-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 12px;
-        margin-top: 20px;
-    }
-    .cal-card {
-        background: white; border: 2px solid #FF9933;
-        border-radius: 15px; height: 90px;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        position: relative; cursor: help;
-        transition: 0.3s;
-    }
-    .cal-card:hover { background: #FF4D00 !important; transform: scale(1.05); }
-    .cal-card:hover b, .cal-card:hover span { color: white !important; }
-
-    .tooltip {
-        visibility: hidden; width: 180px; background-color: #3e2723;
-        color: white !important; text-align: center; border-radius: 8px;
-        padding: 8px; position: absolute; z-index: 100;
-        bottom: 110%; left: 50%; margin-left: -90px;
-        opacity: 0; transition: 0.3s; font-size: 12px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3); pointer-events: none;
-    }
-    .cal-card:hover .tooltip { visibility: visible; opacity: 1; }
     
     .stat-card {
         background: white; padding: 1.2rem; border-radius: 20px;
         text-align: center; border: 2px solid #FFE0B2;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
+    
+    /* Elegant Calendar Box Style */
+    .cal-box {
+        background: white; border: 2px solid #FF9933;
+        border-radius: 15px; padding: 15px;
+        text-align: center; margin-bottom: 10px;
+        transition: 0.3s;
+    }
+    .cal-box:hover { border-color: #FF4D00; background: #FFF9F5; transform: translateY(-3px); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -94,10 +76,11 @@ if 'user_session' not in st.session_state:
 
 # --- LOGIN SCREEN ---
 if not st.session_state.user_session:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
-    u_name = st.text_input("आपका नाम")
-    u_phone = st.text_input("मोबाइल नंबर", max_chars=10)
-    if st.button("प्रवेश करें", use_container_width=True):
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा • 2026</div></div>', unsafe_allow_html=True)
+    st.write("### 🙏 स्वागत है")
+    u_name = st.text_input("आपका पावन नाम लिखें")
+    u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10)
+    if st.button("दिव्य प्रवेश करें", use_container_width=True):
         if u_name and len(u_phone) == 10:
             loc = get_user_location()
             st.session_state.user_session = u_phone
@@ -110,66 +93,69 @@ if not st.session_state.user_session:
             save_db(df)
             st.rerun()
 
-# --- MAIN DASHBOARD ---
+# --- MAIN APP ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div><div style="font-size:0.9rem;">📍 {df.at[user_idx, "Location"]}</div></div>', unsafe_allow_html=True)
 
-    t1, t2, t3 = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
+    t1, t2, t3 = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 पावन कैलेंडर"])
 
+    # --- TAB 1: MY SEVA ---
     with t1:
         today_total = int(df.at[user_idx, 'Today_Count'])
         col1, col2 = st.columns(2)
-        with col1: st.markdown(f"<div class='stat-card'><small>आज की माला</small><h2>{today_total // 108}</h2></div>", unsafe_allow_html=True)
-        with col2: st.markdown(f"<div class='stat-card'><small>कुल जाप</small><h2>{int(df.at[user_idx, 'Total_Counts'])}</h2></div>", unsafe_allow_html=True)
+        with col1: st.markdown(f"<div class='stat-card'><small>आज की माला</small><h2 style='color:#FF4D00;'>{today_total // 108}</h2></div>", unsafe_allow_html=True)
+        with col2: st.markdown(f"<div class='stat-card'><small>कुल जाप</small><h2 style='color:#FF4D00;'>{int(df.at[user_idx, 'Total_Counts'])}</h2></div>", unsafe_allow_html=True)
         
         st.divider()
-        mode = st.radio("Mode:", ["माला", "संख्या"], horizontal=True)
-        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1, value=(today_total // 108 if mode == "माला" else today_total))
-        if st.button("✅ अपडेट करें", use_container_width=True):
-            new_jap = val * 108 if mode == "माला" else val
+        mode = st.radio("अपडेट मोड:", ["पूरी माला", "जाप संख्या"], horizontal=True)
+        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1, value=(today_total // 108 if mode == "पूरी माला" else today_total))
+        if st.button("✅ डेटा अपडेट करें", use_container_width=True):
+            new_jap = val * 108 if mode == "पूरी माला" else val
             df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - today_total) + new_jap
             df.at[user_idx, 'Today_Count'] = new_jap
             df.at[user_idx, 'Last_Active'] = today_str
             save_db(df)
-            st.success("अपडेट हो गया!")
+            st.success("डेटा अपडेट हो गया!")
             st.rerun()
 
+    # --- TAB 2: LEADERBOARD ---
     with t2:
-        st.subheader("🏆 आज के टॉप सेवक")
+        st.subheader("🏆 आज के शीर्ष सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Count", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.markdown(f'<div style="background:white; padding:10px; border-radius:10px; margin-bottom:5px; border-left:5px solid #FF9933; display:flex; justify-content:space-between;"><span>#{i+1} {row["Name"]}</span><b>{row["Today_Count"] // 108} माला</b></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:white; padding:12px; border-radius:15px; margin-bottom:8px; border-left:6px solid #FF9933; display:flex; justify-content:space-between;"><span>#{i+1} {row["Name"]}</span><b>{row["Today_Count"] // 108} माला</b></div>', unsafe_allow_html=True)
 
+    # --- TAB 3: STABLE CALENDAR (No Errors) ---
     with t3:
-        st.subheader("📅 पावन उत्सव 2026")
-        events = [
-            ("14 Jan", "मकर संक्रांति", "सूर्य का उत्तरायण प्रवेश।"),
-            ("15 Feb", "महाशिवरात्रि", "शिव-शक्ति मिलन का महापर्व।"),
-            ("14 Mar", "होली", "रंगों का उत्सव।"),
-            ("27 Mar", "राम नवमी", "प्रभु श्री राम जन्मोत्सव।"),
-            ("02 Apr", "हनुमान जयंती", "बजरंगबली जन्मोत्सव।"),
-            ("20 Oct", "दशहरा", "धर्म की विजय का पर्व।"),
-            ("09 Nov", "दीपावली", "दीपों का महापर्व।")
-        ]
+        st.subheader("📅 पावन वार्षिक कैलेंडर 2026")
         
-        grid_html = '<div class="cal-grid">'
-        for date, name, desc in events:
-            grid_html += f'''
-            <div class="cal-card">
-                <b style="color:#FF4D00;">{date}</b>
-                <span style="font-size:10px;">2026</span>
-                <div class="tooltip"><b>{name}</b><br>{desc}</div>
-            </div>
-            '''
-        grid_html += '</div>'
-        st.markdown(grid_html, unsafe_allow_html=True)
+        events = [
+            {"date": "14 Jan", "name": "मकर संक्रांति", "desc": "सूर्य देव का उत्तरायण में प्रवेश।"},
+            {"date": "15 Feb", "name": "महाशिवरात्रि", "desc": "भगवान शिव और माता पार्वती का महापर्व।"},
+            {"date": "14 Mar", "name": "होली / आमलकी एकादशी", "desc": "रंगों का उत्सव और आंवले के वृक्ष की पूजा।"},
+            {"date": "27 Mar", "name": "श्री राम नवमी", "desc": "मर्यादा पुरुषोत्तम भगवान श्री राम का जन्मोत्सव।"},
+            {"date": "02 Apr", "name": "हनुमान जयंती", "desc": "पवनपुत्र हनुमान जी का पावन जन्मोत्सव।"},
+            {"date": "20 Oct", "name": "विजयादशमी", "desc": "बुराई पर अच्छाई की जीत (दशहरा)।"},
+            {"date": "09 Nov", "name": "दीपावली", "desc": "प्रभु राम के आगमन पर दीपों का महापर्व।"}
+        ]
 
+        # Using Native Streamlit Columns for stability
+        for event in events:
+            with st.container():
+                col_date, col_info = st.columns([1, 3])
+                with col_date:
+                    st.markdown(f"<div class='cal-box'><b style='color:#FF4D00;'>{event['date']}</b><br><small>2026</small></div>", unsafe_allow_html=True)
+                with col_info:
+                    with st.expander(f"✨ {event['name']}"):
+                        st.write(event['desc'])
+
+    # Admin Panel
     if st.session_state.user_session == ADMIN_NUMBER:
         st.sidebar.markdown("---")
         csv = df.to_csv(index=False).encode('utf-8-sig')
-        st.sidebar.download_button("📊 डेटा डाउनलोड", data=csv, file_name='ram_data.csv')
+        st.sidebar.download_button("📊 डेटा एक्सेल डाउनलोड", data=csv, file_name='ram_data.csv')
 
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button("लॉगआउट"):
         st.session_state.user_session = None
         st.rerun()
