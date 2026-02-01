@@ -45,33 +45,82 @@ def get_user_location():
 # --- INTERACTIVE UI CSS ---
 st.markdown("""
     <style>
-    .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
+    /* मुख्य बैकग्राउंड और फॉन्ट */
+    .stApp {
+        background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%);
+        font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* हेडर स्टाइल */
     .app-header {
         background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
-        color: white !important; padding: 2.5rem 1rem; border-radius: 0 0 50px 50px;
-        text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
+        color: white !important;
+        padding: 3rem 1rem;
+        border-radius: 0 0 60px 60px;
+        text-align: center;
+        margin: -1rem -1rem 2rem -1rem;
+        box-shadow: 0 15px 35px rgba(255, 77, 0, 0.4);
     }
+    
+    /* मुख्य माला डिस्प्ले बॉक्स */
     .metric-box {
-        background: white; padding: 50px 20px; border-radius: 20px; text-align: center;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 8px solid #FFD700; margin-bottom: 25px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 50px 20px;
+        border-radius: 30px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border: 2px solid #FFFFFF;
+        border-top: 10px solid #FFD700;
+        margin-bottom: 30px;
+        transition: transform 0.3s ease;
     }
-    .cal-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 15px 0; }
-    .cal-card {
-        width: 85px; height: 85px; background: white; border: 1.5px solid #FF9933;
-        border-radius: 15px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; position: relative; transition: 0.3s;
+    .metric-box:hover {
+        transform: translateY(-5px);
     }
-    .cal-card:hover { background: #FF4D00 !important; transform: scale(1.1); z-index: 10; cursor: pointer; }
-    .cal-card:hover b { color: white !important; }
-    .tooltip {
-        visibility: hidden; width: 160px; background: #3e2723; color: white !important;
-        text-align: center; border-radius: 8px; padding: 8px; position: absolute;
-        bottom: 115%; left: 50%; margin-left: -85px; opacity: 0; transition: 0.3s; font-size: 10px;
+    
+    /* बटन स्टाइल */
+    .stButton>button {
+        background: linear-gradient(90deg, #FF4D00, #FF9933);
+        color: white !important;
+        border: none;
+        border-radius: 15px;
+        padding: 0.6rem 1rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 77, 0, 0.2);
     }
-    .cal-card:hover .tooltip { visibility: visible; opacity: 1; }
+    .stButton>button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(255, 77, 0, 0.4);
+        border: none;
+    }
+    
+    /* इनपुट फील्ड्स */
+    .stNumberInput, .stTextInput {
+        border-radius: 12px !important;
+    }
+    
+    /* टैब्स स्टाइल */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: white;
+        border-radius: 10px 10px 0 0;
+        padding: 10px 20px;
+        color: #FF4D00;
+    }
+    
+    /* अलर्ट और बैनर */
+    .stAlert {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
     </style>
 """, unsafe_allow_html=True)
-
 df = load_db()
 today_str = datetime.now().strftime("%Y-%m-%d")
 
@@ -187,3 +236,4 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+
