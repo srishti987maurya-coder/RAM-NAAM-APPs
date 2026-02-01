@@ -257,92 +257,83 @@ else:
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-    with tabs[2]:
-        st.subheader("📅 पावन तिथि कैलेंडर - फरवरी 2026")
+   with tabs[2]:
+        st.subheader("📅 पावन तिथि कैलेंडर 2026")
         
-        # Calendar ka data (February 2026 example)
-        # Format: (Date_Number, Event_Name, Description)
-        month_days = [
-            (1, "", ""), (2, "", ""), (3, "", ""), (4, "", ""), (5, "", ""), (6, "", ""), (7, "", ""),
-            (8, "", ""), (9, "", ""), (10, "", ""), (11, "", ""), (12, "", ""), 
-            (13, "विजया एकादशी", "आज के दिन व्रत रखने से कार्यों में विजय प्राप्त होती है।"),
-            (14, "मकर संक्रांति / षटतिला एकादशी", "सूर्य उत्तरायण प्रवेश एवं पापनाशिनी एकादशी।"),
-            (15, "", ""), (16, "", ""), (17, "", ""), (18, "", ""), (19, "", ""), (20, "", ""), (21, "", ""),
-            (22, "", ""), (23, "", ""), (24, "", ""), (25, "", ""), (26, "", ""),
-            (27, "आमलकी एकादशी", "आंवले के वृक्ष का पूजन और मोक्ष प्रदायिनी तिथि।"),
-            (28, "महाशिवरात्रि", "भगवान शिव और माता पार्वती का पावन विवाह उत्सव।")
-        ]
+        # Mahina chunne ka option
+        selected_month = st.selectbox("महीना चुनें:", [
+            "January", "February", "March", "April", "May", "June", 
+            "July", "August", "September", "October", "November", "December"
+        ], index=datetime.now().month - 1)
 
-        # CSS for Real Calendar Grid
+        # 2026 ka sabhi pramukh data
+        cal_data = {
+            "January": {"start_gap": 3, "days": 31, "events": {14: ("षटतिला एकादशी", "मकर संक्रांति - पापनाशिनी तिथि"), 29: ("जया एकादशी", "मोक्ष प्रदायिनी तिथि")}},
+            "February": {"start_gap": 6, "days": 28, "events": {13: ("विजया एकादशी", "विजय प्राप्ति हेतु व्रत"), 27: ("आमलकी एकादशी", "आंवला एकादशी/शिवरात्रि")}},
+            "March": {"start_gap": 6, "days": 31, "events": {14: ("पापमोचिनी एकादशी", "पापों का नाश करने वाली"), 27: ("राम नवमी", "प्रभु श्री राम जन्मोत्सव"), 29: ("कामदा एकादशी", "कामना पूर्ण करने वाली")}},
+            "April": {"start_gap": 2, "days": 30, "events": {2: ("हनुमान जयंती", "बजरंगबली जन्मोत्सव"), 13: ("वरुथिनी एकादशी", "सौभाग्य प्रदायिनी तिथि"), 28: ("मोहिनी एकादशी", "माया मोह नाशिनी")}},
+            "May": {"start_gap": 4, "days": 31, "events": {12: ("अपरा एकादशी", "अपार पुण्य देने वाली"), 27: ("निर्जला एकादशी", "भीमसेनी एकादशी - सबसे कठिन व्रत")}},
+            "June": {"start_gap": 0, "days": 30, "events": {11: ("योगिनी एकादशी", "काया शोधन हेतु"), 26: ("शयनी एकादशी", "चातुर्मास आरंभ - भगवान का शयन")}},
+            "July": {"start_gap": 2, "days": 31, "events": {10: ("कामिका एकादशी", "संकट नाशिनी तिथि"), 26: ("पुत्रदा एकादशी", "संतान सुख प्रदायिनी")}},
+            "August": {"start_gap": 5, "days": 31, "events": {9: ("अजा एकादशी", "राजा हरिश्चंद्र को मिला फल"), 24: ("पार्श्व एकादशी", "भगवान की करवट बदलने वाली तिथि")}},
+            "September": {"start_gap": 1, "days": 30, "events": {7: ("इन्दिरा एकादशी", "पितरों की मुक्ति हेतु"), 22: ("पापांकुशा एकादशी", "यमराज के दंड से मुक्ति")}},
+            "October": {"start_gap": 3, "days": 31, "events": {7: ("रमा एकादशी", "लक्ष्मी जी का पावन व्रत"), 21: ("प्रबोधिनी एकादशी", "तुलसी विवाह - देव उत्थान तिथि")}},
+            "November": {"start_gap": 6, "days": 30, "events": {5: ("उत्पन्ना एकादशी", "एकादशी माता का जन्म"), 20: ("मोक्षदा एकादशी", "गीता जयंती - मोक्ष प्रदायिनी")}},
+            "December": {"start_gap": 1, "days": 31, "events": {5: ("सफला एकादशी", "कार्यों में सफलता हेतु"), 20: ("पुत्रदा एकादशी", "पावन पौष मास व्रत")}}
+        }
+
+        # CSS Styles (Calendar Grid)
         st.markdown("""
             <style>
             .calendar-wrapper {
-                display: grid;
-                grid-template-columns: repeat(7, 1fr);
-                gap: 8px;
-                background: white;
-                padding: 15px;
-                border-radius: 20px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+                display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+                background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             }
-            .day-name {
-                text-align: center;
-                font-weight: bold;
-                color: #FF4D00;
-                padding-bottom: 10px;
-                font-size: 0.8rem;
-            }
+            .day-label { text-align: center; font-weight: bold; color: #FF4D00; font-size: 0.8rem; margin-bottom: 5px; }
             .date-cell {
-                aspect-ratio: 1;
-                border: 1px solid #f0f0f0;
-                border-radius: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 500;
-                position: relative;
-                transition: 0.3s;
-                cursor: default;
+                aspect-ratio: 1; border: 1px solid #f8f8f8; border-radius: 12px;
+                display: flex; align-items: center; justify-content: center;
+                font-weight: 500; position: relative; transition: 0.3s;
             }
-            .has-event {
-                background: #FFF5E6;
-                border: 1.5px solid #FF9933;
-                color: #FF4D00;
-                font-weight: bold;
-            }
-            .date-cell:hover {
-                transform: scale(1.1);
-                z-index: 5;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            }
-            .has-event:hover {
-                background: #FF4D00 !important;
-                color: white !important;
-            }
+            .has-event { background: #FFF5E6; border: 1.5px solid #FF9933; color: #FF4D00; font-weight: bold; cursor: pointer; }
+            .date-cell:hover { transform: scale(1.15); z-index: 5; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+            .has-event:hover { background: #FF4D00 !important; color: white !important; }
             .event-tip {
-                visibility: hidden;
-                width: 140px;
-                background: #3e2723;
-                color: white;
-                text-align: center;
-                border-radius: 8px;
-                padding: 8px;
-                position: absolute;
-                bottom: 125%;
-                left: 50%;
-                margin-left: -70px;
-                opacity: 0;
-                transition: 0.3s;
-                font-size: 11px;
-                z-index: 10;
-                line-height: 1.4;
+                visibility: hidden; width: 160px; background: #3e2723; color: white;
+                text-align: center; border-radius: 10px; padding: 10px; position: absolute;
+                bottom: 130%; left: 50%; margin-left: -80px; opacity: 0; transition: 0.3s;
+                font-size: 11px; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             }
-            .date-cell:hover .event-tip {
-                visibility: visible;
-                opacity: 1;
-            }
+            .date-cell:hover .event-tip { visibility: visible; opacity: 1; }
             </style>
         """, unsafe_allow_html=True)
+
+        # Days Header
+        cols = st.columns(7)
+        for i, d in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
+            cols[i].markdown(f"<div class='day-label'>{d}</div>", unsafe_allow_html=True)
+
+        # Month Logic
+        m_data = cal_data[selected_month]
+        grid_html = '<div class="calendar-wrapper">'
+        
+        # Empty cells for start gap
+        for _ in range(m_data["start_gap"]):
+            grid_html += '<div class="date-cell" style="border:none; opacity:0;"></div>'
+            
+        # Actual Days
+        for d in range(1, m_data["days"] + 1):
+            event_info = m_data["events"].get(d)
+            if event_info:
+                name, desc = event_info
+                tip = f'<div class="event-tip"><b>{name}</b><br>{desc}</div>'
+                grid_html += f'<div class="date-cell has-event">{d}{tip}</div>'
+            else:
+                grid_html += f'<div class="date-cell">{d}</div>'
+                
+        grid_html += '</div>'
+        st.markdown(grid_html, unsafe_allow_html=True)
+        st.caption("नोट: केसरिया रंग वाली तिथियों पर माउस ले जाकर उनकी महिमा जानें।")
 
         # Calendar Header (Days)
         days_header = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -385,6 +376,7 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+
 
 
 
