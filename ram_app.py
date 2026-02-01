@@ -160,4 +160,26 @@ else:
     # Entry
     st.markdown("<div style='font-weight:bold; margin-bottom:5px;'>📝 जाप दर्ज करें:</div>", unsafe_allow_html=True)
     mode = st.radio("Mode:", ["📿 माला", "🔢 संख्या"], horizontal=True, label_visibility="collapsed")
-    val = st.number_input("Enter count:", min_value=
+    val = st.number_input("Enter count:", min_value=0, step=1, value=(today_total // 108 if mode == "📿 माला" else today_total))
+
+    if st.button("✅ डेटा अपडेट करें", use_container_width=True):
+        new_count = val * 108 if mode == "📿 माला" else val
+        old_count = df.at[user_idx, 'Today_Count']
+        df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - old_count) + new_count
+        df.at[user_idx, 'Today_Count'] = new_count
+        df.at[user_idx, 'Last_Active'] = today_str
+        save_db(df)
+        st.success("सफलतापूर्वक अपडेट किया गया!")
+        st.rerun()
+
+    # --- CALENDAR (Fixed & Organized) ---
+    st.markdown("<br><div style='font-weight:bold; font-size:1.1rem;'>📅 पावन वार्षिक कैलेंडर 2026</div>", unsafe_allow_html=True)
+    tabs = st.tabs(list(calendar_data.keys()))
+    for i, tab in enumerate(tabs):
+        with tab:
+            for event in calendar_data[list(calendar_data.keys())[i]]:
+                st.markdown(f"<div class='calendar-card'>🔸 {event}</div>", unsafe_allow_html=True)
+
+    if st.sidebar.button("Logout"):
+        st.session_state.user_session = None
+        st.rerun()
