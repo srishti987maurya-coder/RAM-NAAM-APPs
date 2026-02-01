@@ -70,14 +70,15 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- LOGIN ---
+# --- FIXED LOGIN LOGIC ---
 if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
-    u_name = st.text_input("अपना पावन नाम लिखें")
+    u_name = st.text_input("आपका पावन नाम लिखें")
     u_phone = st.text_input("मोबाइल नंबर", max_chars=10)
     
     if st.button("दिव्य प्रवेश", use_container_width=True):
-        if u_name and len(u_phone) == 10:
+        if u_name and len(u_phone) == 10 and u_phone.isdigit():
+            # यदि नंबर नया है, तो रजिस्टर करें; यदि पुराना है, तो सीधे लॉगिन करें
             st.session_state.user_session = u_phone
             if u_phone not in df['Phone'].values:
                 loc = get_user_location()
@@ -85,6 +86,10 @@ if st.session_state.user_session is None:
                 df = pd.concat([df, new_user], ignore_index=True)
                 save_db(df)
             st.rerun()
+        else:
+            st.error("❌ कृपया सही नाम और 10 अंकों का मोबाइल नंबर भरें।")
+
+# --- MAIN DASHBOARD ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
@@ -92,16 +97,13 @@ else:
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 पावन कैलेंडर"])
 
     with tabs[0]:
-        # Reset today's count if date changed
         if df.at[user_idx, 'Last_Active'] != today_str:
             df.at[user_idx, 'Today_Jaap'] = 0
             df.at[user_idx, 'Last_Active'] = today_str
             save_db(df)
 
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
-        
-        # मुख्य प्रदर्शन: केवल माला (Only Mala Display)
-        mala_display = today_jap / 108  # सटीक माला दिखाने के लिए (जैसे 54.78)
+        mala_display = today_jap / 108 
         
         st.markdown(f"""
         <div class="metric-box">
@@ -111,39 +113,36 @@ else:
         """, unsafe_allow_html=True)
 
         st.divider()
-        st.subheader("📝 नई सेवा जोड़ें")
+        st.subheader("📝 सेवा जोड़ें / बदलें")
         
-        entry_mode = st.radio("इनपुट टाइप:", ["माला (108 जाप)", "सटीक जाप संख्या"], horizontal=True)
+        entry_mode = st.radio("चुनें:", ["माला (108 जाप)", "सटीक जाप संख्या"], horizontal=True)
         val = st.number_input("संख्या दर्ज करें:", min_value=0.0, step=1.0)
         
-        col_add, col_edit = st.columns(2)
-        with col_add:
+        col1, col2 = st.columns(2)
+        with col1:
             if st.button("➕ सेवा जोड़ें", use_container_width=True):
                 add_jaap = val * 108 if "माला" in entry_mode else val
                 df.at[user_idx, 'Total_Jaap'] += add_jaap
                 df.at[user_idx, 'Today_Jaap'] += add_jaap
                 save_db(df)
-                st.success(f"सेवा सफलतापूर्वक जोड़ी गई!")
                 st.rerun()
-        
-        with col_edit:
-            if st.button("✏️ सुधार करें (Overwrite)", use_container_width=True):
+        with col2:
+            if st.button("✏️ सुधार करें", use_container_width=True):
                 new_jap = val * 108 if "माला" in entry_mode else val
                 df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_jap
                 df.at[user_idx, 'Today_Jaap'] = new_jap
                 save_db(df)
-                st.warning("आज का डेटा संशोधित किया गया!")
                 st.rerun()
 
     with tabs[1]:
-        st.subheader("🏆 आज के शीर्ष सेवक")
+        st.subheader("🏆 टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
             st.write(f"#{i+1} {row['Name']} — {(row['Today_Jaap']/108):.2f} माला")
 
     with tabs[2]:
-        st.subheader("📅 पावन उत्सव कैलेंडर 2026")
-        events = [("14 Jan", "मकर संक्रांति"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी"), ("14 Apr", "वरुथिनी एकादशी"), ("02 Apr", "हनुमान जयंती"), ("09 Nov", "दीपावली")]
+        st.subheader("📅 उत्सव कैलेंडर 2026")
+        events = [("14 Jan", "मकर संक्रांति"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी")]
         grid_html = '<div class="cal-grid">'
         for d, n in events:
             grid_html += f'<div class="cal-card"><b>{d}</b><div class="tooltip">{n}</div></div>'
