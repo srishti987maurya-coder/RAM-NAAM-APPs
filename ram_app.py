@@ -126,12 +126,62 @@ else:
             st.info("आज की सेवा अभी शुरू होनी है।")
 
     # TAB 3: CALENDAR
+    # टैब 3: कैलेंडर (Interative Hover Calendar)
     with tabs[2]:
-        st.subheader("📅 पावन कैलेंडर 2026")
-        cal = {"राम उत्सव": ["राम नवमी - 27 मार्च", "दीपावली - 9 नवंबर"], "एकादशी": ["षटतिला - 14 जन", "आमलकी - 14 मार्च"]}
-        for k, v in cal.items():
-            with st.expander(k):
-                for e in v: st.write(f"🔸 {e}")
+        st.subheader("📅 पावन वार्षिक कैलेंडर 2026")
+        
+        # कैलेंडर डेटा: तारीख, त्योहार और उसका महत्व
+        holy_events = {
+            "2026-01-14": {"event": "षटतिला एकादशी", "desc": "तिल के दान और भगवान विष्णु की पूजा का दिन।"},
+            "2026-02-15": {"event": "महाशिवरात्रि", "desc": "भगवान शिव और माता पार्वती के मिलन का महापर्व।"},
+            "2026-03-14": {"event": "होली / आमलकी एकादशी", "desc": "रंगों का उत्सव और आंवले के वृक्ष की पूजा।"},
+            "2026-03-27": {"event": "श्री राम नवमी", "desc": "मर्यादा पुरुषोत्तम भगवान श्री राम का प्राकट्य उत्सव।"},
+            "2026-04-02": {"event": "हनुमान जयंती", "desc": "पवनपुत्र हनुमान जी का जन्मोत्सव।"},
+            "2026-10-20": {"event": "विजयादशमी", "desc": "अधर्म पर धर्म की विजय का प्रतीक (दशहरा)।"},
+            "2026-11-09": {"event": "दीपावली", "desc": "श्री राम के अयोध्या आगमन पर दीपों का उत्सव।"}
+        }
+
+        st.markdown("""
+            <style>
+            .cal-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+            .cal-day {
+                width: 80px; height: 80px; background: white; 
+                border: 2px solid #FF9933; border-radius: 15px;
+                display: flex; flex-direction: column; align-items: center;
+                justify-content: center; position: relative; cursor: pointer;
+                transition: 0.3s;
+            }
+            .cal-day:hover { background: #FF4D00; color: white !important; transform: scale(1.1); }
+            .cal-day:hover .tooltip { visibility: visible; opacity: 1; }
+            .tooltip {
+                visibility: hidden; width: 160px; background-color: #3e2723;
+                color: #fff !important; text-align: center; border-radius: 6px;
+                padding: 8px; position: absolute; z-index: 10;
+                bottom: 110%; left: 50%; margin-left: -80px;
+                opacity: 0; transition: opacity 0.3s; font-size: 12px;
+                box-shadow: 0px 5px 10px rgba(0,0,0,0.2);
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        st.write("नीचे दी गई तिथियों पर माउस ले जाएँ (Hover करें):")
+        
+        # ग्रिड बनाना
+        html_code = '<div class="cal-container">'
+        for date_str, info in holy_events.items():
+            d = datetime.strptime(date_str, "%Y-%m-%d")
+            day_name = d.strftime("%d %b")
+            html_code += f'''
+            <div class="cal-day">
+                <span style="font-weight:bold;">{day_name}</span>
+                <span style="font-size:10px;">2026</span>
+                <div class="tooltip"><b>{info['event']}</b><br>{info['desc']}</div>
+            </div>
+            '''
+        html_code += '</div>'
+        
+        st.markdown(html_code, unsafe_allow_html=True)
+        st.markdown("<br><p style='text-align:center; font-size:12px;'>भविष्य में यहाँ पूरे महीने का कैलेंडर जोड़ा जाएगा।</p>", unsafe_allow_html=True)
 
     # TAB 4: ADMIN
     if st.session_state.user_session == ADMIN_NUMBER:
@@ -144,3 +194,4 @@ else:
     if st.sidebar.button("लॉगआउट"):
         st.session_state.user_session = None
         st.rerun()
+
