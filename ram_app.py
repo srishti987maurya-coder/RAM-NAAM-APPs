@@ -59,36 +59,47 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- EASY LOGIN (FIXED VALUEERROR) ---
+# --- LOGIN / AUTHENTICATION SECTION ---
 if st.session_state.user_session is None:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1></div>', unsafe_allow_html=True)
     
-    st.subheader("🙏 लॉगिन / रजिस्ट्रेशन")
-    u_name = st.text_input("नाम (नए भक्तों के लिए)")
-    u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10)
-    
-    if st.button("दिव्य प्रवेश करें", use_container_width=True):
-        if len(u_phone) == 10 and u_phone.isdigit():
-            st.session_state.user_session = u_phone
-            if u_phone not in df['Phone'].values:
-                loc = get_user_location()
-                d_name = u_name if u_name else "भक्त"
-                # FIXED: डेटा की संख्या (6) और कॉलम की संख्या (6) अब बराबर है
-                new_data = {
-                    "Phone": [u_phone],
-                    "Name": [d_name],
-                    "Total_Jaap": [0],
-                    "Last_Active": [today_str],
-                    "Today_Jaap": [0],
-                    "Location": [loc]
-                }
-                new_user_df = pd.DataFrame(new_data)
-                df = pd.concat([df, new_user_df], ignore_index=True)
-                save_db(df)
-            st.rerun()
-        else:
-            st.error("❌ कृपया सही 10 अंकों का मोबाइल नंबर भरें।")
+    u_name = st.text_input("आपका पावन नाम लिखें").strip()
+    u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10).strip()
 
+    # यहाँ आपका कोड ब्लॉक आएगा:
+    if st.button("दिव्य प्रवेश करें", use_container_width=True):
+        if not u_name or len(u_phone) != 10 or not u_phone.isdigit():
+            st.error("❌ कृपया सही नाम और 10 अंकों का मोबाइल नंबर भरें।")
+        else:
+            # 1. मोबाइल नंबर की जाँच (Strict Match)
+            if u_phone in df['Phone'].values:
+                existing_name = df[df['Phone'] == u_phone]['Name'].values[0]
+                if u_name.lower() != existing_name.lower():
+                    st.error(f"❌ यह नंबर पहले से ही '{existing_name}' के नाम से रजिस्टर्ड है।")
+                else:
+                    st.session_state.user_session = u_phone
+                    st.rerun()
+            
+            # 2. नाम की जाँच (Unique Name per Number)
+            elif u_name.lower() in df['Name'].str.lower().values:
+                st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है। कृपया अपना पुराना नंबर उपयोग करें।")
+            
+            # 3. सफल नया रजिस्ट्रेशन
+            else:
+                loc = get_user_location()
+                st.session_state.user_session = u_phone
+                new_data = {
+                    "Phone": [u_phone], "Name": [u_name], "Total_Jaap": [0],
+                    "Last_Active": [today_str], "Today_Jaap": [0], "Location": [loc]
+                }
+                df = pd.concat([df, pd.DataFrame(new_data)], ignore_index=True)
+                save_db(df)
+                st.rerun()
+
+# --- MAIN APP SECTION ---
+else:
+    # यहाँ से आपका डैशबोर्ड शुरू होता है (Tabs, Leaderboard, etc.)
+    ...
 # --- MAIN DASHBOARD ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
@@ -131,3 +142,4 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+
