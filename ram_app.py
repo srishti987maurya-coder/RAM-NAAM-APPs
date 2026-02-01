@@ -37,102 +37,112 @@ def get_user_location():
         return f"{data.get('city', 'Unknown')}, {data.get('country_name', 'India')}"
     except: return "India"
 
-# --- PREMIUM UI STYLING ---
+# --- ADVANCED DIVINE UI STYLING ---
 st.markdown("""
     <style>
-    /* Background Gradient */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Poppins', sans-serif;
+    }
+
     .stApp {
-        background: linear-gradient(180deg, #FFF5E6 0%, #FFECCC 100%);
+        background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%);
     }
 
-    /* Primary Text Color */
-    .stMarkdown, p, label, span, li, div, h1, h2, h3 {
-        color: #5D4037 !important;
-        font-family: 'Segoe UI', Roboto, sans-serif;
-    }
-
-    /* Premium Header */
+    /* Floating Header */
     .app-header {
-        background: linear-gradient(135deg, #FF4D00 0%, #FF8000 100%);
+        background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
         color: white !important;
         padding: 3rem 1rem;
-        border-radius: 0 0 50px 50px;
+        border-radius: 0 0 60px 60px;
         text-align: center;
         margin: -1rem -1rem 2rem -1rem;
-        box-shadow: 0 15px 35px rgba(255, 77, 0, 0.25);
-        border-bottom: 4px solid #FFD700;
+        box-shadow: 0 20px 40px rgba(255, 77, 0, 0.3);
+        border-bottom: 5px solid #FFD700;
     }
-    .app-header h1 { color: #FFFFFF !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-size: 2.5rem; }
-    .app-header div { color: #FFEB3B !important; font-weight: bold; letter-spacing: 1px; }
+    
+    .app-header h1 { 
+        color: #FFFFFF !important; 
+        font-weight: 800;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+    }
 
-    /* Glassmorphism Stat Cards */
+    /* Divine Quote Card */
+    .quote-card {
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        padding: 15px;
+        font-style: italic;
+        text-align: center;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    /* Glass Stat Cards */
     .stat-card {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        padding: 1.5rem;
-        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        padding: 20px;
+        border-radius: 30px;
         text-align: center;
         border: 2px solid #FFD700;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.05);
-        transition: 0.3s;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transition: 0.4s ease;
     }
-    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(255, 128, 0, 0.15); }
+    .stat-card:hover { transform: scale(1.05); box-shadow: 0 15px 45px rgba(255, 128, 0, 0.2); }
 
-    /* Premium Leaderboard Rows */
+    /* Progress Bar */
+    .progress-container {
+        background-color: #f1f1f1;
+        border-radius: 20px;
+        margin: 20px 0;
+        height: 15px;
+        overflow: hidden;
+        border: 1px solid #FFD700;
+    }
+    .progress-bar {
+        background: linear-gradient(90deg, #FFD700, #FF4D00);
+        height: 100%;
+        border-radius: 20px;
+        transition: width 1s ease-in-out;
+    }
+
+    /* Leaderboard Premium Items */
     .leader-row {
         background: white;
-        padding: 15px 20px;
-        border-radius: 20px;
-        margin-bottom: 12px;
-        border-left: 8px solid #FFD700;
+        padding: 15px;
+        border-radius: 25px;
+        margin-bottom: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #FFE0B2;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.03);
     }
 
-    /* Calendar Grid Styles */
-    .cal-container { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 20px 0; }
+    /* Interactive Calendar Buttons */
     .cal-day {
-        width: 100px; height: 100px;
+        width: 95px; height: 95px;
         background: white;
         border: 2px solid #FFD700;
-        border-radius: 20px;
+        border-radius: 25px;
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
-        position: relative; cursor: pointer;
-        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .cal-day:hover { background: #FFD700 !important; color: #5D4037 !important; transform: scale(1.1); }
-    
-    .tooltip {
-        visibility: hidden; width: 220px; background-color: #3e2723;
-        color: #ffffff !important; text-align: center; border-radius: 12px; padding: 12px;
-        position: absolute; z-index: 100; bottom: 120%; left: 50%; margin-left: -110px;
-        opacity: 0; transition: 0.3s; font-size: 14px;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.3); pointer-events: none;
-    }
-    .cal-day:hover .tooltip { visibility: visible; opacity: 1; }
-
-    /* Login & Buttons */
-    .stButton>button {
-        background: linear-gradient(90deg, #FF8000, #FF4D00);
-        color: white !important;
-        border: none;
-        border-radius: 15px;
-        padding: 0.6rem 2rem;
-        font-weight: bold;
         transition: 0.3s;
+        cursor: help;
     }
-    .stButton>button:hover { background: linear-gradient(90deg, #FF4D00, #FF8000); transform: scale(1.02); }
+    .cal-day:hover { background: #FFD700 !important; color: white !important; }
 
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: white;
-        border: 1px solid #FFD700;
-        border-radius: 10px 10px 0 0;
-        padding: 8px 16px;
+    /* Buttons */
+    .stButton>button {
+        background: linear-gradient(90deg, #FF4D00, #FFD700);
+        color: white !important;
+        border-radius: 50px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        border: none;
+        padding: 10px 25px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -140,15 +150,24 @@ st.markdown("""
 df = load_db()
 today_str = datetime.now().strftime("%Y-%m-%d")
 
-# --- LOGIN / DASHBOARD LOGIC ---
+# --- QUOTE OF THE DAY ---
+quotes = [
+    "जिसके हृदय में राम नाम है, उसके लिए संसार का हर काम आसान है।",
+    "राम का नाम लो, जीवन का कल्याण करो।",
+    "प्रेम और भक्ति का संगम है - श्री राम धाम।",
+    "मन को शांत रखो, और राम नाम का जाप करो।"
+]
+
+# --- LOGIN / DASHBOARD ---
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
 if not st.session_state.user_session:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>राम नाम जाप सेवा • जय श्री राम</div></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>आध्यात्मिक उन्नति का मार्ग</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="quote-card">“{quotes[0]}”</div>', unsafe_allow_html=True)
+    
     with st.container():
-        st.write("### 🙏 स्वागत है")
-        u_name = st.text_input("आपका पावन नाम", placeholder="उदा. राहुल शर्मा")
+        u_name = st.text_input("आपका नाम", placeholder="उदा. राम भक्त")
         u_phone = st.text_input("मोबाइल नंबर", max_chars=10, placeholder="99xxxxxxxx")
         
         if st.button("दिव्य प्रवेश करें", use_container_width=True):
@@ -163,8 +182,7 @@ if not st.session_state.user_session:
                     df.at[idx, 'Location'] = loc
                 save_db(df)
                 st.rerun()
-            else:
-                st.error("कृपया सही जानकारी दर्ज करें।")
+
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     
@@ -174,62 +192,58 @@ else:
         df.at[user_idx, 'Last_Active'] = today_str
         save_db(df)
 
-    st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div><div style="font-size:1rem; margin-top:8px;">📍 {df.at[user_idx, "Location"]}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div style="font-size:1.2rem;">जय श्री राम, {df.at[user_idx, "Name"]}</div><div style="font-size:0.9rem;">📍 {df.at[user_idx, "Location"]}</div></div>', unsafe_allow_html=True)
 
-    t_labels = ["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"]
-    if st.session_state.user_session == ADMIN_NUMBER:
-        t_labels.append("⚙️ एडमिन")
-    
-    tabs = st.tabs(t_labels)
+    tabs = st.tabs(["🏠 मुख्य", "🏆 रैंकिंग", "📅 कैलेंडर"])
 
     with tabs[0]:
+        # Progress Bar Logic (Target: 108 Malas)
         today_total = int(df.at[user_idx, 'Today_Count'])
+        progress_pct = min((today_total / (108 * 108)) * 100, 100)
+        
         col1, col2 = st.columns(2)
-        with col1: st.markdown(f"<div class='stat-card'><small>आज की सेवा</small><h2 style='color:#FF4D00;'>{today_total // 108} माला</h2></div>", unsafe_allow_html=True)
+        with col1: st.markdown(f"<div class='stat-card'><small>आज की माला</small><h2 style='color:#FF4D00;'>{today_total // 108}</h2></div>", unsafe_allow_html=True)
         with col2: st.markdown(f"<div class='stat-card'><small>कुल जाप</small><h2 style='color:#FF4D00;'>{int(df.at[user_idx, 'Total_Counts'])}</h2></div>", unsafe_allow_html=True)
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        with st.expander("✨ सेवा अपडेट करें", expanded=True):
-            mode = st.radio("प्रकार:", ["पूरी माला", "जाप संख्या"], horizontal=True)
-            val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1, value=(today_total // 108 if mode == "पूरी माला" else today_total))
-            if st.button("✅ डेटा सुरक्षित करें", use_container_width=True):
-                new_jap = val * 108 if mode == "पूरी माला" else val
-                old_jap = df.at[user_idx, 'Today_Count']
-                df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - old_jap) + new_jap
-                df.at[user_idx, 'Today_Count'] = new_jap
-                df.at[user_idx, 'Last_Active'] = today_str
-                save_db(df)
-                st.success("सफलतापूर्वक अपडेट!")
-                st.rerun()
+        st.markdown(f"""
+            <p style='margin-bottom:5px; font-weight:bold;'>दैनिक लक्ष्य प्रगति:</p>
+            <div class="progress-container"><div class="progress-bar" style="width: {progress_pct}%"></div></div>
+        """, unsafe_allow_html=True)
+
+        mode = st.radio("अपडेट प्रकार:", ["माला", "संख्या"], horizontal=True)
+        val = st.number_input("विवरण लिखें:", min_value=0, step=1, value=(today_total // 108 if mode == "माला" else today_total))
+        if st.button("✨ डेटा सुरक्षित करें", use_container_width=True):
+            new_jap = val * 108 if mode == "माला" else val
+            old_jap = df.at[user_idx, 'Today_Count']
+            df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - old_jap) + new_jap
+            df.at[user_idx, 'Today_Count'] = new_jap
+            df.at[user_idx, 'Last_Active'] = today_str
+            save_db(df)
+            st.balloons()
+            st.rerun()
 
     with tabs[1]:
-        st.subheader("🏆 आज के शीर्ष सेवक")
-        leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Count", ascending=False).head(10)
-        if not leaders.empty:
-            for i, (idx, row) in enumerate(leaders.iterrows()):
-                crown = "🥇" if i==0 else "🥈" if i==1 else "🥉" if i==2 else f"#{i+1}"
-                st.markdown(f'<div class="leader-row"><span><b>{crown}</b> {row["Name"]}</span><span style="color:#FF4D00; font-weight:bold;">{row["Today_Count"] // 108} माला</span></div>', unsafe_allow_html=True)
-        else:
-            st.info("आज की सेवा अभी शुरू होनी है।")
+        st.subheader("🏆 आज के शीर्ष भक्त")
+        leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Count", ascending=False).head(5)
+        for i, (idx, row) in enumerate(leaders.iterrows()):
+            icon = "👑" if i==0 else "⭐"
+            st.markdown(f'<div class="leader-row"><span>{icon} <b>{row["Name"]}</b></span><span>{row["Today_Count"] // 108} माला</span></div>', unsafe_allow_html=True)
 
     with tabs[2]:
-        st.subheader("📅 पावन कैलेंडर 2026")
-        cal_html = """<div class="cal-container">
-            <div class="cal-day"><b>15 Feb</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">महाशिवरात्रि</b><br>शिव-शक्ति मिलन का महापर्व।</div></div>
-            <div class="cal-day"><b>14 Mar</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">होली</b><br>रंगों का उत्सव।</div></div>
-            <div class="cal-day"><b>27 Mar</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">राम नवमी</b><br>प्रभु श्री राम जन्मोत्सव।</div></div>
-            <div class="cal-day"><b>02 Apr</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">हनुमान जयंती</b><br>बजरंगबली जन्मोत्सव।</div></div>
-            <div class="cal-day"><b>20 Oct</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">विजयादशमी</b><br>धर्म की विजय का पर्व।</div></div>
-            <div class="cal-day"><b>09 Nov</b><span style="font-size:10px;">2026</span><div class="tooltip"><b style="color:#FFD700;">दीपावली</b><br>दीपों का महाउत्सव।</div></div>
+        st.subheader("📅 पावन उत्सव 2026")
+        cal_html = """<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
+            <div class="cal-day"><b>27 Mar</b><small>राम नवमी</small></div>
+            <div class="cal-day"><b>02 Apr</b><small>हनुमान जयंती</small></div>
+            <div class="cal-day"><b>09 Nov</b><small>दीपावली</small></div>
         </div>"""
         st.markdown(cal_html, unsafe_allow_html=True)
 
+    # Admin View (Visible only to your number)
     if st.session_state.user_session == ADMIN_NUMBER:
-        with tabs[3]:
-            st.subheader("📊 एडमिन डेटा")
-            st.dataframe(df, use_container_width=True)
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 Excel डाउनलोड करें", data=csv, file_name='shri_ram_data.csv', mime='text/csv')
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("⚙️ एडमिन")
+        csv = df.to_csv(index=False).encode('utf-8-sig')
+        st.sidebar.download_button("📊 डेटा डाउनलोड", data=csv, file_name='ram_data.csv', mime='text/csv')
 
     if st.sidebar.button("लॉगआउट"):
         st.session_state.user_session = None
