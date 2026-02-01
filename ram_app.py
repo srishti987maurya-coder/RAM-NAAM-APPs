@@ -14,16 +14,14 @@ ADMIN_NUMBERS = ["9987621091", "8169513359"]
 SANKALP_TARGET = 1100000 
 
 def load_db():
-    # कॉलम की लिस्ट को बिल्कुल स्थिर (Strict) रखना ताकि ValueError न आए
     cols = ["Phone", "Name", "Total_Jaap", "Last_Active", "Today_Jaap", "Location"]
     if os.path.exists(DB_FILE):
         try:
             df = pd.read_csv(DB_FILE, dtype={'Phone': str})
-            # यदि कोई कॉलम कम है तो उसे जोड़ें
             for c in cols:
                 if c not in df.columns:
                     df[c] = 0 if "Jaap" in c else "India"
-            return df[cols] # केवल आवश्यक कॉलम ही लोड करें
+            return df[cols]
         except: pass
     return pd.DataFrame(columns=cols)
 
@@ -43,12 +41,16 @@ st.markdown("""
     .stApp { background: #FFF5E6; }
     .app-header {
         background: linear-gradient(135deg, #FF4D00, #FF9933);
-        color: white !important; padding: 2rem 1rem; border-radius: 0 0 40px 40px;
-        text-align: center; margin: -1rem -1rem 1.5rem -1rem;
+        color: white !important; padding: 2.5rem 1rem; border-radius: 0 0 50px 50px;
+        text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
     }
     .metric-box {
         background: white; padding: 30px 20px; border-radius: 20px; text-align: center;
         box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid #FFD700;
+    }
+    .wa-btn {
+        display: inline-block; padding: 6px 12px; background-color: #25D366;
+        color: white !important; text-decoration: none; border-radius: 50px; font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -59,19 +61,19 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- LOGIN / AUTHENTICATION SECTION ---
+# --- LOGIN SCREEN WITH STRICT REJECTION ---
 if st.session_state.user_session is None:
-    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
+    st.write("### 🙏 भक्त प्रवेश")
     
-    u_name = st.text_input("आपका पावन नाम लिखें").strip()
+    u_name = st.text_input("अपना पावन नाम लिखें").strip()
     u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10).strip()
-
-    # यहाँ आपका कोड ब्लॉक आएगा:
+    
     if st.button("दिव्य प्रवेश करें", use_container_width=True):
         if not u_name or len(u_phone) != 10 or not u_phone.isdigit():
             st.error("❌ कृपया सही नाम और 10 अंकों का मोबाइल नंबर भरें।")
         else:
-            # 1. मोबाइल नंबर की जाँच (Strict Match)
+            # सुरक्षा जाँच 1: क्या यह फोन नंबर पहले से किसी और नाम से है?
             if u_phone in df['Phone'].values:
                 existing_name = df[df['Phone'] == u_phone]['Name'].values[0]
                 if u_name.lower() != existing_name.lower():
@@ -80,11 +82,11 @@ if st.session_state.user_session is None:
                     st.session_state.user_session = u_phone
                     st.rerun()
             
-            # 2. नाम की जाँच (Unique Name per Number)
+            # सुरक्षा जाँच 2: क्या यह नाम पहले से किसी और नंबर से है?
             elif u_name.lower() in df['Name'].str.lower().values:
                 st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है। कृपया अपना पुराना नंबर उपयोग करें।")
             
-            # 3. सफल नया रजिस्ट्रेशन
+            # नया यूजर रजिस्ट्रेशन (ValueError-Free)
             else:
                 loc = get_user_location()
                 st.session_state.user_session = u_phone
@@ -92,14 +94,11 @@ if st.session_state.user_session is None:
                     "Phone": [u_phone], "Name": [u_name], "Total_Jaap": [0],
                     "Last_Active": [today_str], "Today_Jaap": [0], "Location": [loc]
                 }
-                df = pd.concat([df, pd.DataFrame(new_data)], ignore_index=True)
+                new_user_df = pd.DataFrame(new_data)
+                df = pd.concat([df, new_user_df], ignore_index=True)
                 save_db(df)
                 st.rerun()
 
-# --- MAIN APP SECTION ---
-else:
-    # यहाँ से आपका डैशबोर्ड शुरू होता है (Tabs, Leaderboard, etc.)
-    ...
 # --- MAIN DASHBOARD ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
@@ -114,7 +113,6 @@ else:
             save_db(df)
 
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
-        
         st.markdown(f"""
         <div class="metric-box">
             <h2 style='color:#FF4D00; margin:0;'>{(today_jap/108):.2f} माला</h2>
@@ -123,23 +121,48 @@ else:
         """, unsafe_allow_html=True)
 
         st.divider()
-        val = st.number_input("माला जोड़ें (1 माला = 108 जाप):", min_value=0.0, step=1.0)
+        val = st.number_input("माला संख्या (1 माला = 108 जाप):", min_value=0.0, step=1.0)
         
-        if st.button("➕ सेवा जोड़ें (Add)", use_container_width=True):
-            add_jaap = val * 108
-            df.at[user_idx, 'Total_Jaap'] += add_jaap
-            df.at[user_idx, 'Today_Jaap'] += add_jaap
-            save_db(df)
-            st.success("माला जोड़ दी गई!")
-            st.rerun()
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("➕ जोड़ें", use_container_width=True):
+                df.at[user_idx, 'Total_Jaap'] += (val * 108)
+                df.at[user_idx, 'Today_Jaap'] += (val * 108)
+                save_db(df)
+                st.rerun()
+        with c2:
+            if st.button("✏️ सुधारें", use_container_width=True):
+                new_j = val * 108
+                df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_j
+                df.at[user_idx, 'Today_Jaap'] = new_j
+                save_db(df)
+                st.rerun()
 
     with tabs[1]:
-        st.subheader("🏆 टॉप सेवक")
+        st.subheader("🏆 आज के टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
             st.write(f"#{i+1} {row['Name']} — {(row['Today_Jaap']/108):.2f} माला")
 
+    with tabs[2]:
+        st.subheader("📅 उत्सव एवं एकादशी 2026")
+        events = [("14 Jan", "मकर संक्रांति"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी")]
+        for d, n in events: st.info(f"🚩 {d} — {n}")
+
+    # --- ADMIN CONTROL: DELETE USER ---
+    if st.session_state.user_session in ADMIN_NUMBERS:
+        with st.sidebar:
+            st.subheader("⚙️ एडमिन पैनल")
+            target = st.selectbox("हटाने के लिए भक्त चुनें:", ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")"))
+            if target != "--चुनें--" and st.button("🗑️ भक्त डिलीट करें", use_container_width=True):
+                df = df[df['Phone'] != target.split("(")[1].replace(")", "")]
+                save_db(df)
+                st.success("सफलतापूर्वक हटाया गया!")
+                st.rerun()
+            
+            csv = df.to_csv(index=False).encode('utf-8-sig')
+            st.download_button("📥 डेटा एक्सेल", data=csv, file_name='ram_data.csv')
+
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
-
