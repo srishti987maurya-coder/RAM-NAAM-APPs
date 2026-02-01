@@ -144,3 +144,21 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+         # --- ADMIN SIDEBAR ---
+    if st.session_state.user_session in ADMIN_NUMBERS:
+        with st.sidebar:
+            st.subheader("⚙️ एडमिन पैनल")
+            u_list = ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")")
+            target = st.selectbox("यूजर डिलीट करें:", u_list)
+            if target != "--चुनें--" and st.button("🗑️ डिलीट"):
+                df = df[df['Phone'] != target.split("(")[1].replace(")", "")]
+                save_db(df)
+                st.rerun()
+            st.divider()
+            csv = df.to_csv(index=False).encode('utf-8-sig')
+            st.download_button("📥 Excel Download", data=csv, file_name='ram_seva_data.csv')
+
+    if st.sidebar.button("Logout"):
+        st.session_state.user_session = None
+        st.rerun()
+
