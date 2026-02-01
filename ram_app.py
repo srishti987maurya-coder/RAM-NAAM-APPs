@@ -206,11 +206,57 @@ else:
                 st.rerun()
 
     with tabs[1]:
-        st.subheader("🏆 आज के टॉप सेवक")
+        st.subheader("🏆 आज के श्रेष्ठ सेवक")
+        
+        # आज का डेटा फ़िल्टर करें और टॉप 10 निकालें
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
-        for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Mala']} माला")
+        
+        if leaders.empty:
+            st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है। पहले सेवक बनें!")
+        else:
+            for i, (idx, row) in enumerate(leaders.iterrows()):
+                rank = i + 1
+                # पदक और रंग का चुनाव
+                if rank == 1:
+                    bg_color, medal = "#FFD700", "🥇" # Gold
+                    border = "3px solid #DAA520"
+                elif rank == 2:
+                    bg_color, medal = "#E0E0E0", "🥈" # Silver
+                    border = "2px solid #C0C0C0"
+                elif rank == 3:
+                    bg_color, medal = "#CD7F32", "🥉" # Bronze
+                    border = "2px solid #A0522D"
+                else:
+                    bg_color, medal = "#FFFFFF", "💠" # Others
+                    border = "1px solid #eee"
 
+                # इंटरएक्टिव कार्ड डिज़ाइन
+                st.markdown(f"""
+                    <div style="
+                        background: {bg_color};
+                        padding: 15px 20px;
+                        border-radius: 15px;
+                        border: {border};
+                        margin-bottom: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                        transition: 0.3s ease;
+                    " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 1.5rem;">{medal}</span>
+                            <div>
+                                <b style="font-size: 1.1rem; color: #333;">{row['Name']}</b><br>
+                                <small style="color: #666;">📍 {row['Location']}</small>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 1.2rem; font-weight: bold; color: #FF4D00;">{int(row['Today_Mala'])}</span>
+                            <span style="font-size: 0.9rem; color: #444;"> माला</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
     with tabs[2]:
         st.subheader("📅 पावन उत्सव ग्रिड 2026")
         grid_html = '<div class="cal-grid">'
@@ -236,4 +282,5 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
+
 
