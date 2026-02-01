@@ -98,6 +98,15 @@ if st.session_state.user_session is None:
                 df = pd.concat([df, new_user_df], ignore_index=True)
                 save_db(df)
                 st.rerun()
+                # 2. एकादशी ऑटोमेशन चेक (Tabs से ठीक पहले डालें)
+    today = datetime.now().strftime("%Y-%m-%d")
+    if today in EKADASHI_2026:
+        st.markdown("""
+            <div style="background-color: #FFD700; padding: 15px; border-radius: 10px; border-left: 5px solid #FF4D00; text-align: center; margin-bottom: 20px;">
+                <h4 style="margin:0; color: #5D4037;">🙏 जय श्री राम! आज पावन एकादशी है।</h4>
+                <p style="margin:0; color: #5D4037;">भगवान विष्णु की कृपा आप पर बनी रहे। अपना जाप और सेवा रिकॉर्ड करना न भूलें! 🚩</p>
+            </div>
+        """, unsafe_allow_html=True)
 
 # --- MAIN DASHBOARD ---
 else:
@@ -175,4 +184,5 @@ if st.session_state.user_session in ADMIN_NUMBERS:
         # आप यहाँ अपना Excel डाउनलोड बटन भी रख सकते हैं
         csv = df.to_csv(index=False).encode('utf-8-sig')
         st.download_button("📥 डेटा एक्सेल डाउनलोड", data=csv, file_name='ram_data.csv')
+
 
