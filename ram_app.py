@@ -52,7 +52,7 @@ st.markdown("""
         text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
     }
     .metric-box {
-        background: white; padding: 40px; border-radius: 20px; text-align: center;
+        background: white; padding: 50px 20px; border-radius: 20px; text-align: center;
         box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 8px solid #FFD700; margin-bottom: 25px;
     }
     .cal-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 15px 0; }
@@ -124,14 +124,12 @@ else:
 
         current_jaap = int(df.at[user_idx, 'Today_Jaap'])
         current_mala = current_jaap // 108
-        rem_jaap = current_jaap % 108
         
-        # UI Fix: Only Mala big, Jaap small below as per image_2531fe.png
+        # Display: ONLY MALA (Clean UI)
         st.markdown(f"""
         <div class="metric-box">
-            <h1 style='color:#FF4D00; margin:0; font-size: 4rem;'>{current_mala} माला</h1>
-            <h3 style='color:#FF9933; margin:0;'>{rem_jaap} जाप</h3>
-            <p style='color:#666; font-weight: bold; margin-top:15px;'>आज की कुल सेवा</p>
+            <h1 style='color:#FF4D00; margin:0; font-size: 4.5rem;'>{current_mala} माला</h1>
+            <p style='color:#666; font-weight: bold; margin-top:15px; font-size: 1.2rem;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -142,12 +140,10 @@ else:
         with c1:
             if st.button("➕ सेवा जोड़ें", use_container_width=True):
                 added_jaap = val if mode == "जाप संख्या (सीधा)" else (val * 108)
-                
                 df.at[user_idx, 'Today_Jaap'] += added_jaap
                 df.at[user_idx, 'Today_Mala'] = df.at[user_idx, 'Today_Jaap'] // 108
                 df.at[user_idx, 'Total_Jaap'] += added_jaap
                 df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
-                
                 save_db(df)
                 st.rerun()
         with c2:
@@ -164,7 +160,7 @@ else:
         st.subheader("🏆 आज के टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Jaap'] // 108} माला {row['Today_Jaap'] % 108} जाप")
+            st.write(f"#{i+1} {row['Name']} — {row['Today_Mala']} माला")
 
     with tabs[2]:
         st.subheader("📅 पावन उत्सव ग्रिड 2026")
