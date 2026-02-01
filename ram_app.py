@@ -14,14 +14,15 @@ st.set_page_config(
 
 # --- DATABASE SETUP ---
 DB_FILE = "ram_seva_data.csv"
-ADMIN_NUMBER = "9999"  # Change this to your desired Admin Number
+# Updated Admin Number as per your request
+ADMIN_NUMBER = "9987621091" 
 
 def load_db():
     required = ["Phone", "Name", "Total_Counts", "Last_Active", "Today_Count", "Location"]
     if os.path.exists(DB_FILE):
         try:
             df = pd.read_csv(DB_FILE, dtype={'Phone': str})
-            # Auto-repair missing columns
+            # Auto-repair missing columns if they don't exist
             for col in required:
                 if col not in df.columns:
                     df[col] = 0 if "Count" in col else "India"
@@ -34,7 +35,7 @@ def save_db(df):
     df.to_csv(DB_FILE, index=False)
 
 def get_user_location():
-    """Fetches user city/country via IP. Shows 'India' if local/restricted."""
+    """Fetches user city/country via IP."""
     try:
         response = requests.get('https://ipapi.co/json/', timeout=3)
         if response.status_code == 200:
@@ -48,7 +49,7 @@ def get_user_location():
 st.markdown("""
     <style>
     .stApp { background: #FFF5E6; }
-    /* Visibility Fix: Dark Brown text for better readability */
+    /* Visibility Fix: Dark Brown text */
     .stMarkdown, p, label, span, li, div, h1, h2, h3 {
         color: #3e2723 !important;
         font-weight: 500;
@@ -156,7 +157,7 @@ else:
         
         st.divider()
         st.subheader("📝 सेवा दर्ज या सुधारें")
-        mode = st.radio("प्रकार:", ["पूरी माला", "जाप संख्या"], horizontal=True)
+        mode = st.radio("प्रकार चुनें:", ["पूरी माला", "जाप संख्या"], horizontal=True)
         val = st.number_input("संख्या लिखें:", min_value=0, step=1, value=(today_total // 108 if mode == "पूरी माला" else today_total))
         
         if st.button("✅ डेटा अपडेट करें", use_container_width=True):
