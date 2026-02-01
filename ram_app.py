@@ -188,25 +188,57 @@ else:
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
 
-    # --- ADMIN SIDEBAR ---
+ # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
             st.subheader("⚙️ एडमिन कंट्रोल")
+            
+            # 1. यूजर डिलीट करें
             u_list = ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")")
             target = st.selectbox("यूजर डिलीट करें:", u_list)
             if target != "--चुनें--" and st.button("🗑️ डिलीट"):
                 df = df[df['Phone'] != target.split("(")[1].replace(")", "")]
                 save_db(df)
                 st.rerun()
+            
             st.divider()
-            new_m = st.text_area("ब्रॉडकास्ट सन्देश:", value=b_msg)
+            
+            # 2. ब्रॉडकास्ट सन्देश
+            new_m = st.text_area("ब्रॉडकास्ट सन्देश:", value=get_broadcast())
             if st.button("📢 सन्देश अपडेट करें"):
                 save_broadcast(new_m)
                 st.rerun()
+                
             st.divider()
-            csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv')
+            
+            # 3. रिमाइंडर फीचर (जिन्होंने आज माला नहीं जोड़ी)
+            st.subheader("🔔 सेवा स्मरण (Reminders)")
+            inactive_today = df[df['Last_Active'] != today_str]
+            
+            if not inactive_today.empty:
+                st.warning(f"⚠️ {len(inactive_today)} भक्तों ने आज माला नहीं जोड़ी है।")
+                
+                # चुनिंदा भक्त को WhatsApp मैसेज भेजने का विकल्प
+                rem_user = st.selectbox("स्मरण भेजने के लिए चुनें:", ["--भक्त चुनें--"] + inactive_today['Name'].tolist())
+                
+                if rem_user != "--भक्त चुनें--":
+                    u_row = inactive_today[inactive_today['Name'] == rem_user].iloc[0]
+                    u_phone = "91" + str(u_row['Phone'])
+                    msg = urllib.parse.quote(f"जय श्री राम {rem_user} जी! आज आपकी माला सेवा अभी तक रिकॉर्ड नहीं हुई है। कृपया अपनी सेवा श्री राम धाम ऐप पर दर्ज करें। 🙏🚩")
+                    wa_link = f"https://wa.me/{u_phone}?text={msg}"
+                    
+                    st.markdown(f'<a href="{wa_link}" target="_blank" class="wa-btn" style="display: block; text-align: center; background: #25D366; color: white; padding: 10px; border-radius: 10px; text-decoration: none; font-weight: bold;">💬 WhatsApp पर याद दिलाएं</a>', unsafe_allow_html=True)
+            else:
+                st.success("✅ आज सभी ने सेवा दर्ज की है!")
 
-    if st.sidebar.button("Logout"):
+            st.divider()
+            
+            # 4. एक्सेल डाउनलोड
+            csv = df.to_csv(index=False).encode('utf-8-sig')
+            st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv', use_container_width=True)
+
+    # Logout Button
+    if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
