@@ -11,9 +11,8 @@ st.set_page_config(page_title="श्री राम धाम", page_icon="�
 # --- DATABASE SETUP ---
 DB_FILE = "ram_seva_data.csv"
 ADMIN_NUMBERS = ["9987621091", "8169513359"] 
-SANKALP_TARGET = 1100000 
 
-# एकादशी तिथियां (2026) - संदेश भेजने के लिए डेटाबेस
+# एकादशी तिथियां 2026
 EKADASHI_2026 = ["14 Jan", "28 Feb", "27 Mar", "14 Apr", "13 May", "10 Jul", "07 Aug", "05 Sep", "04 Nov", "20 Dec"]
 
 def load_db():
@@ -40,16 +39,10 @@ st.markdown("""
         color: white !important; padding: 2rem 1rem; border-radius: 0 0 50px 50px;
         text-align: center; margin: -1rem -1rem 1rem -1rem;
     }
-    .reminder-box {
-        background: #E3F2FD; padding: 15px; border-radius: 15px;
-        border-left: 5px solid #2196F3; margin-bottom: 20px; color: #0D47A1;
+    .sms-btn {
+        display: inline-block; padding: 5px 10px; background-color: #4CAF50;
+        color: white !important; text-decoration: none; border-radius: 5px; font-size: 12px;
     }
-    .cal-card {
-        width: 85px; height: 85px; background: white; border: 1.5px solid #FF9933;
-        border-radius: 15px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; position: relative; transition: 0.3s;
-    }
-    .cal-card:hover { background: #FF4D00 !important; transform: scale(1.1); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -60,12 +53,12 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- LOGIN SCREEN ---
+# --- LOGIN & MAIN LOGIC ---
 if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
     u_name = st.text_input("भक्त का नाम")
     u_phone = st.text_input("मोबाइल नंबर", max_chars=10)
-    if st.button("दिव्य प्रवेश करें", use_container_width=True):
+    if st.button("दिव्य प्रवेश"):
         if u_name and len(u_phone) == 10:
             st.session_state.user_session = u_phone
             if u_phone not in df['Phone'].values:
@@ -77,28 +70,19 @@ else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
 
-    # एकादशी अलर्ट (Inside App)
-    if today_dm in EKADASHI_2026:
-        st.markdown(f'<div class="reminder-box">✨ आज <b>एकादशी</b> है! विशेष जाप करें और ऐप में दर्ज करना न भूलें।</div>', unsafe_allow_html=True)
-
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
 
     with tabs[0]:
         today_total = int(df.at[user_idx, 'Today_Count'])
-        c1, c2 = st.columns(2)
-        with c1: st.metric("आज की माला", f"{today_total // 108}")
-        with c2: st.metric("आज का कुल जाप", f"{today_total}")
-        
-        mode = st.radio("प्रकार चुनें:", ["पूरी माला", "जाप संख्या"], horizontal=True)
-        val = st.number_input("संख्या लिखें:", min_value=0, step=1, value=(today_total // 108 if mode == "पूरी माला" else today_total))
-        
+        st.metric("आज का कुल जाप", f"{today_total}")
+        val = st.number_input("माला संख्या (1 माला = 108):", min_value=0, step=1, value=(today_total // 108))
         if st.button("✅ सेवा अपडेट करें", use_container_width=True):
-            new_jap = val * 108 if mode == "पूरी माला" else val
+            new_jap = val * 108
             df.at[user_idx, 'Total_Counts'] = (df.at[user_idx, 'Total_Counts'] - today_total) + new_jap
             df.at[user_idx, 'Today_Count'] = new_jap
             df.at[user_idx, 'Last_Active'] = today_str
             save_db(df)
-            st.success("अपडेट हो गया!")
+            st.success("अपडेट सफल!")
             st.rerun()
 
     with tabs[1]:
@@ -108,34 +92,29 @@ else:
             st.write(f"#{i+1} {row['Name']} — {row['Today_Count'] // 108} माला")
 
     with tabs[2]:
-        st.subheader("📅 पावन उत्सव कैलेंडर 2026")
-        events = [("14 Jan", "षटतिला एकादशी"), ("15 Feb", "महाशिवरात्रि"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी"), ("02 Apr", "हनुमान जयंती"), ("09 Nov", "दीपावली")]
-        cols = st.columns(3)
-        for i, (d, n) in enumerate(events):
-            with cols[i % 3]:
-                st.markdown(f"<div class='cal-card'><b style='color:#FF4D00;'>{d}</b><br><small>{n}</small></div>", unsafe_allow_html=True)
+        st.subheader("📅 कैलेंडर 2026")
+        events = [("14 Jan", "एकादशी"), ("15 Feb", "महाशिवरात्रि"), ("27 Mar", "राम नवमी")]
+        for d, n in events: st.write(f"🚩 {d} — {n}")
 
-    # --- ADMIN REMINDER CONTROL (For Outside Messages) ---
+    # --- ADMIN SMS REMINDER ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
-            st.subheader("⚙️ एडमिन कंट्रोल")
-            st.write("---")
-            st.write("📢 **WhatsApp रिमाइन्डर भेजें**")
+            st.subheader("⚙️ एडमिन पैनल")
+            st.write("📢 **SMS रिमाइन्डर भेजें**")
             
-            # संदेश का प्रारूप (Message Draft)
-            reminder_msg = "जय श्री राम! आज एकादशी है। कृपया अपनी माला पूर्ण करें और 'श्री राम धाम' ऐप में अपनी सेवा दर्ज करें। धन्यवाद!"
+            sms_body = "Jai Shri Ram! Aaj Ekadashi hai. Kripya apni mala purn kare aur Shri Ram Dham app me darj kare. Dhanyawad!"
             
-            # प्रत्येक भक्त के लिए WhatsApp लिंक बनाना
             for i, row in df.iterrows():
-                if row['Phone'] not in ADMIN_NUMBERS: # खुद को न भेजें
-                    encoded_msg = urllib.parse.quote(f"प्रणाम {row['Name']}, {reminder_msg}")
-                    wa_link = f"https://wa.me/91{row['Phone']}?text={encoded_msg}"
-                    st.markdown(f"👉 [{row['Name']} को भेजें]({wa_link})")
+                if row['Phone'] not in ADMIN_NUMBERS:
+                    # SMS URL Scheme (sms:+91...;?&body=...)
+                    safe_msg = urllib.parse.quote(sms_body)
+                    sms_link = f"sms:+91{row['Phone']}?body={safe_msg}"
+                    st.markdown(f"📩 {row['Name']}: [SMS भेजें]({sms_link})")
             
-            st.write("---")
+            st.divider()
             csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 डेटा एक्सेल डाउनलोड", data=csv, file_name='ram_data.csv')
+            st.download_button("📥 डेटा एक्सेल", data=csv, file_name='ram_data.csv')
 
-    if st.sidebar.button("लॉगआउट"):
+    if st.sidebar.button("Logout"):
         st.session_state.user_session = None
         st.rerun()
