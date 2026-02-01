@@ -27,7 +27,7 @@ def load_db():
 def save_db(df):
     df.to_csv(DB_FILE, index=False)
 
-# --- PREMIUM UI STYLING ---
+# --- RESTORED ORIGINAL PREMIUM UI ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
@@ -62,6 +62,7 @@ st.markdown("""
         display: inline-block; padding: 6px 12px; background-color: #25D366;
         color: white !important; text-decoration: none; border-radius: 50px; font-weight: bold;
     }
+    .del-btn { background-color: #FF0000 !important; color: white !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,27 +77,22 @@ if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
     st.write("### 🙏 भक्त प्रवेश")
     
-    u_name = st.text_input("अपना पावन नाम लिखें").strip()
-    u_phone = st.text_input("मोबाइल नंबर दर्ज करें", max_chars=10).strip()
+    u_name = st.text_input("नाम").strip()
+    u_phone = st.text_input("मोबाइल नंबर", max_chars=10).strip()
     
     if st.button("दिव्य प्रवेश करें", use_container_width=True):
         if not u_name or len(u_phone) != 10 or not u_phone.isdigit():
-            st.error("❌ कृपया सही नाम और 10 अंकों का मोबाइल नंबर भरें।")
+            st.error("❌ सही विवरण भरें।")
         else:
-            # CHECK 1: If Phone exists, does the Name match?
             if u_phone in df['Phone'].values:
                 existing_name = df[df['Phone'] == u_phone]['Name'].values[0]
                 if u_name.lower() != existing_name.lower():
-                    st.error(f"❌ यह नंबर पहले से ही '{existing_name}' के नाम से रजिस्टर्ड है। कृपया अपना सही नाम भरें।")
+                    st.error(f"❌ यह नंबर '{existing_name}' के नाम से है।")
                 else:
                     st.session_state.user_session = u_phone
                     st.rerun()
-            
-            # CHECK 2: If Name exists, is it being used with a different Phone?
             elif u_name.lower() in df['Name'].str.lower().values:
-                st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है। कृपया अपना वही पुराना नंबर उपयोग करें।")
-            
-            # SUCCESS: New unique user
+                st.error(f"❌ '{u_name}' नाम पहले से रजिस्टर्ड है।")
             else:
                 st.session_state.user_session = u_phone
                 new_user = pd.DataFrame([[u_phone, u_name, 0, today_str, 0, "India"]], columns=df.columns)
@@ -104,12 +100,12 @@ if st.session_state.user_session is None:
                 save_db(df)
                 st.rerun()
 
-# --- MAIN DASHBOARD ---
+# --- MAIN APP ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
 
-    # Sankalp Bar
+    # Global Sankalp
     total_jap = df['Total_Counts'].sum()
     pct = min((total_jap / SANKALP_TARGET) * 100, 100)
     st.markdown(f"""<div class='sankalp-card'><b>🙏 सामूहिक संकल्प: {int(total_jap):,} / {SANKALP_TARGET:,}</b>
@@ -123,9 +119,9 @@ else:
         with c1: st.metric("आज की माला", f"{today_total // 108}")
         with c2: st.metric("कुल जाप", f"{int(df.at[user_idx, 'Total_Counts'])}")
         
-        mode = st.radio("इनपुट टाइप:", ["माला", "जाप"], horizontal=True)
-        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1)
-        if st.button("✅ अपडेट करें", use_container_width=True):
+        mode = st.radio("मोड:", ["माला", "जाप"], horizontal=True)
+        val = st.number_input("संख्या:", min_value=0, step=1)
+        if st.button("✅ अपडेट", use_container_width=True):
             add = val * 108 if mode == "माला" else val
             df.at[user_idx, 'Total_Counts'] += add
             df.at[user_idx, 'Today_Count'] += add
@@ -141,24 +137,29 @@ else:
 
     with tabs[2]:
         st.subheader("📅 पावन उत्सव एवं एकादशी 2026")
-        events = [
-            ("14 Jan", "मकर संक्रांति", "सूर्य का उत्तरायण प्रवेश।"),
-            ("28 Feb", "आमलकी एकादशी", "आंवले के वृक्ष की पूजा।"),
-            ("27 Mar", "राम नवमी", "प्रभु श्री राम जन्मोत्सव।"),
-            ("02 Apr", "हनुमान जयंती", "बजरंगबली जन्मोत्सव।"),
-            ("14 Apr", "वरुथिनी एकादशी", "सौभाग्य प्रदायक व्रत।"),
-            ("09 Nov", "दीपावली", "अयोध्या दीपोत्सव महापर्व।"),
-            ("20 Dec", "मोक्षदा एकादशी", "मोक्ष प्रदायिनी एकादशी।")
-        ]
+        events = [("14 Jan", "मकर संक्रांति", "पुण्य काल।"), ("28 Feb", "आमलकी एकादशी", "आंवले की पूजा।"), ("27 Mar", "राम नवमी", "जन्मोत्सव।"), ("02 Apr", "हनुमान जयंती", "बजरंगबली।"), ("09 Nov", "दीपावली", "दीपोत्सव।")]
         grid_html = '<div class="cal-grid">'
         for date, name, desc in events:
             grid_html += f'<div class="cal-card"><b>{date}</b><div class="tooltip"><b>{name}</b><br>{desc}</div></div>'
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
 
+    # --- ADMIN ACCESS: DELETE USER FEATURE ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
-            st.subheader("⚙️ एडमिन")
+            st.subheader("⚙️ एडमिन कंट्रोल")
+            st.write("---")
+            # Delete User Logic
+            user_to_del = st.selectbox("हटाने के लिए भक्त चुनें:", ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")"))
+            if user_to_del != "--चुनें--":
+                target_phone = user_to_del.split("(")[1].replace(")", "")
+                if st.button("🗑️ भक्त को डिलीट करें", use_container_width=True):
+                    df = df[df['Phone'] != target_phone]
+                    save_db(df)
+                    st.success("भक्त को हटा दिया गया है।")
+                    st.rerun()
+            
+            st.write("---")
             for i, row in df.iterrows():
                 if row['Phone'] not in ADMIN_NUMBERS:
                     msg = f"प्रणाम {row['Name']} जी, आज एकादशी है। माला पूर्ण करें। धन्यवाद!"
