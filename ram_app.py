@@ -14,16 +14,18 @@ ADMIN_NUMBERS = ["9987621091", "8169513359"]
 SANKALP_TARGET = 1100000 
 
 def load_db():
-    required = ["Phone", "Name", "Total_Jaap", "Last_Active", "Today_Jaap", "Location"]
+    # कॉलम की लिस्ट को बिल्कुल स्थिर (Strict) रखना ताकि ValueError न आए
+    cols = ["Phone", "Name", "Total_Jaap", "Last_Active", "Today_Jaap", "Location"]
     if os.path.exists(DB_FILE):
         try:
             df = pd.read_csv(DB_FILE, dtype={'Phone': str})
-            for col in required:
-                if col not in df.columns:
-                    df[col] = 0 if "Jaap" in col else "India"
-            return df
+            # यदि कोई कॉलम कम है तो उसे जोड़ें
+            for c in cols:
+                if c not in df.columns:
+                    df[c] = 0 if "Jaap" in c else "India"
+            return df[cols] # केवल आवश्यक कॉलम ही लोड करें
         except: pass
-    return pd.DataFrame(columns=required)
+    return pd.DataFrame(columns=cols)
 
 def save_db(df):
     df.to_csv(DB_FILE, index=False)
@@ -35,32 +37,19 @@ def get_user_location():
         return f"{data.get('city', 'Unknown')}, {data.get('region', 'Unknown')}"
     except: return "India"
 
-# --- PREMIUM UI ---
+# --- UI STYLING ---
 st.markdown("""
     <style>
-    .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
+    .stApp { background: #FFF5E6; }
     .app-header {
-        background: linear-gradient(135deg, #FF4D00 0%, #FF9933 100%);
-        color: white !important; padding: 2rem 1rem; border-radius: 0 0 50px 50px;
-        text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
+        background: linear-gradient(135deg, #FF4D00, #FF9933);
+        color: white !important; padding: 2rem 1rem; border-radius: 0 0 40px 40px;
+        text-align: center; margin: -1rem -1rem 1.5rem -1rem;
     }
     .metric-box {
         background: white; padding: 30px 20px; border-radius: 20px; text-align: center;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid #FFD700; margin-bottom: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid #FFD700;
     }
-    .cal-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px 0; }
-    .cal-card {
-        width: 85px; height: 85px; background: white; border: 1.5px solid #FF9933;
-        border-radius: 15px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; position: relative; transition: 0.3s;
-    }
-    .cal-card:hover { background: #FF4D00 !important; color: white !important; transform: scale(1.1); }
-    .tooltip {
-        visibility: hidden; width: 160px; background: #3e2723; color: white !important;
-        text-align: center; border-radius: 8px; padding: 8px; position: absolute;
-        bottom: 115%; left: 50%; margin-left: -80px; opacity: 0; transition: 0.3s; font-size: 10px;
-    }
-    .cal-card:hover .tooltip { visibility: visible; opacity: 1; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -70,31 +59,42 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- FIXED LOGIN LOGIC ---
+# --- EASY LOGIN (FIXED VALUEERROR) ---
 if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>राम नाम जाप सेवा</div></div>', unsafe_allow_html=True)
-    u_name = st.text_input("आपका पावन नाम लिखें")
-    u_phone = st.text_input("मोबाइल नंबर", max_chars=10)
     
-    if st.button("दिव्य प्रवेश", use_container_width=True):
-        if u_name and len(u_phone) == 10 and u_phone.isdigit():
-            # यदि नंबर नया है, तो रजिस्टर करें; यदि पुराना है, तो सीधे लॉगिन करें
+    st.subheader("🙏 लॉगिन / रजिस्ट्रेशन")
+    u_name = st.text_input("नाम (नए भक्तों के लिए)")
+    u_phone = st.text_input("मोबाइल नंबर (10 अंक)", max_chars=10)
+    
+    if st.button("दिव्य प्रवेश करें", use_container_width=True):
+        if len(u_phone) == 10 and u_phone.isdigit():
             st.session_state.user_session = u_phone
             if u_phone not in df['Phone'].values:
                 loc = get_user_location()
-                new_user = pd.DataFrame([[u_phone, u_name, 0, today_str, 0, loc]], columns=df.columns)
-                df = pd.concat([df, new_user], ignore_index=True)
+                d_name = u_name if u_name else "भक्त"
+                # FIXED: डेटा की संख्या (6) और कॉलम की संख्या (6) अब बराबर है
+                new_data = {
+                    "Phone": [u_phone],
+                    "Name": [d_name],
+                    "Total_Jaap": [0],
+                    "Last_Active": [today_str],
+                    "Today_Jaap": [0],
+                    "Location": [loc]
+                }
+                new_user_df = pd.DataFrame(new_data)
+                df = pd.concat([df, new_user_df], ignore_index=True)
                 save_db(df)
             st.rerun()
         else:
-            st.error("❌ कृपया सही नाम और 10 अंकों का मोबाइल नंबर भरें।")
+            st.error("❌ कृपया सही 10 अंकों का मोबाइल नंबर भरें।")
 
 # --- MAIN DASHBOARD ---
 else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
 
-    tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 पावन कैलेंडर"])
+    tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 कैलेंडर"])
 
     with tabs[0]:
         if df.at[user_idx, 'Last_Active'] != today_str:
@@ -103,51 +103,30 @@ else:
             save_db(df)
 
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
-        mala_display = today_jap / 108 
         
         st.markdown(f"""
         <div class="metric-box">
-            <h2 style='color:#FF4D00; margin:0;'>{mala_display:.2f} माला</h2>
+            <h2 style='color:#FF4D00; margin:0;'>{(today_jap/108):.2f} माला</h2>
             <p style='color:#666; font-weight: bold;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
         st.divider()
-        st.subheader("📝 सेवा जोड़ें / बदलें")
+        val = st.number_input("माला जोड़ें (1 माला = 108 जाप):", min_value=0.0, step=1.0)
         
-        entry_mode = st.radio("चुनें:", ["माला (108 जाप)", "सटीक जाप संख्या"], horizontal=True)
-        val = st.number_input("संख्या दर्ज करें:", min_value=0.0, step=1.0)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➕ सेवा जोड़ें", use_container_width=True):
-                add_jaap = val * 108 if "माला" in entry_mode else val
-                df.at[user_idx, 'Total_Jaap'] += add_jaap
-                df.at[user_idx, 'Today_Jaap'] += add_jaap
-                save_db(df)
-                st.rerun()
-        with col2:
-            if st.button("✏️ सुधार करें", use_container_width=True):
-                new_jap = val * 108 if "माला" in entry_mode else val
-                df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_jap
-                df.at[user_idx, 'Today_Jaap'] = new_jap
-                save_db(df)
-                st.rerun()
+        if st.button("➕ सेवा जोड़ें (Add)", use_container_width=True):
+            add_jaap = val * 108
+            df.at[user_idx, 'Total_Jaap'] += add_jaap
+            df.at[user_idx, 'Today_Jaap'] += add_jaap
+            save_db(df)
+            st.success("माला जोड़ दी गई!")
+            st.rerun()
 
     with tabs[1]:
         st.subheader("🏆 टॉप सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
             st.write(f"#{i+1} {row['Name']} — {(row['Today_Jaap']/108):.2f} माला")
-
-    with tabs[2]:
-        st.subheader("📅 उत्सव कैलेंडर 2026")
-        events = [("14 Jan", "मकर संक्रांति"), ("28 Feb", "आमलकी एकादशी"), ("27 Mar", "राम नवमी")]
-        grid_html = '<div class="cal-grid">'
-        for d, n in events:
-            grid_html += f'<div class="cal-card"><b>{d}</b><div class="tooltip">{n}</div></div>'
-        grid_html += '</div>'
-        st.markdown(grid_html, unsafe_allow_html=True)
 
     if st.sidebar.button("Logout"):
         st.session_state.user_session = None
