@@ -45,7 +45,7 @@ st.markdown("""
         text-align: center; margin: -1rem -1rem 1.5rem -1rem; box-shadow: 0 10px 30px rgba(255, 77, 0, 0.3);
     }
     .metric-box {
-        background: white; padding: 20px; border-radius: 20px; text-align: center;
+        background: white; padding: 30px 20px; border-radius: 20px; text-align: center;
         box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-top: 5px solid #FFD700; margin-bottom: 20px;
     }
     .cal-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 15px 0; }
@@ -99,13 +99,14 @@ else:
             save_db(df)
 
         today_jap = int(df.at[user_idx, 'Today_Jaap'])
-        mala_display = today_jap // 108
-        rem_jaap = today_jap % 108
+        
+        # मुख्य प्रदर्शन: केवल माला (Only Mala Display)
+        mala_display = today_jap / 108  # सटीक माला दिखाने के लिए (जैसे 54.78)
         
         st.markdown(f"""
         <div class="metric-box">
-            <h2 style='color:#FF4D00; margin:0;'>{mala_display} माला {rem_jaap} जाप</h2>
-            <p style='color:#666;'>आज की कुल सेवा</p>
+            <h2 style='color:#FF4D00; margin:0;'>{mala_display:.2f} माला</h2>
+            <p style='color:#666; font-weight: bold;'>आज की कुल सेवा</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -113,7 +114,7 @@ else:
         st.subheader("📝 नई सेवा जोड़ें")
         
         entry_mode = st.radio("इनपुट टाइप:", ["माला (108 जाप)", "सटीक जाप संख्या"], horizontal=True)
-        val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1)
+        val = st.number_input("संख्या दर्ज करें:", min_value=0.0, step=1.0)
         
         col_add, col_edit = st.columns(2)
         with col_add:
@@ -122,12 +123,11 @@ else:
                 df.at[user_idx, 'Total_Jaap'] += add_jaap
                 df.at[user_idx, 'Today_Jaap'] += add_jaap
                 save_db(df)
-                st.success(f"{add_jaap} जाप सफलतापूर्वक जोड़े गए!")
+                st.success(f"सेवा सफलतापूर्वक जोड़ी गई!")
                 st.rerun()
         
         with col_edit:
             if st.button("✏️ सुधार करें (Overwrite)", use_container_width=True):
-                # This replaces today's total with the new value
                 new_jap = val * 108 if "माला" in entry_mode else val
                 df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - today_jap) + new_jap
                 df.at[user_idx, 'Today_Jaap'] = new_jap
@@ -139,7 +139,7 @@ else:
         st.subheader("🏆 आज के शीर्ष सेवक")
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         for i, (idx, row) in enumerate(leaders.iterrows()):
-            st.write(f"#{i+1} {row['Name']} — {row['Today_Jaap'] // 108} माला {row['Today_Jaap'] % 108} जाप")
+            st.write(f"#{i+1} {row['Name']} — {(row['Today_Jaap']/108):.2f} माला")
 
     with tabs[2]:
         st.subheader("📅 पावन उत्सव कैलेंडर 2026")
