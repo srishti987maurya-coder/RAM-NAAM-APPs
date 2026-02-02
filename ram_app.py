@@ -190,33 +190,255 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
 
-    with tabs[2]:
+with tabs[2]:
         st.subheader("📅 पावन तिथि कैलेंडर 2026")
-        sel_m = st.selectbox("महीना चुनें:", list(CAL_DATA_2026.keys()), index=datetime.now().month-1)
-        m_info = CAL_DATA_2026[sel_m]
+        
+        # Sarv san ani Ekadashi chi yadi (Tumhi dilelya data nusar)
+        ALL_EVENTS_2026 = {
+            "January": {
+                "gap": 3, "days": 31,
+                "events": {
+                    1: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    3: ("Paush Purnima Vrat", "Satyanarayan Puja"),
+                    6: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    14: ("Shattila Ekadashi", "Pongal, Uttarayan, Makar Sankranti"),
+                    16: ("Pradosh Vrat (K)", "Masik Shivaratri"),
+                    18: ("Magha Amavasya", "Mauni Amavasya"),
+                    23: ("Basant Panchmi", "Saraswati Puja"),
+                    29: ("Jaya Ekadashi", "Bhami Ekadashi"),
+                    30: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi")
+                }
+            },
+            "February": {
+                "gap": 6, "days": 28,
+                "events": {
+                    1: ("Magha Purnima Vrat", "Holy Bath & Charity"),
+                    5: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    13: ("Vijaya Ekadashi", "Kumbha Sankranti"),
+                    14: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    15: ("Mahashivratri", "Masik Shivaratri - Bholenath Utsav"),
+                    17: ("Phalguna Amavasya", "Pitru Tarpan"),
+                    27: ("Amalaki Ekadashi", "Amla Tree Worship"),
+                    28: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi")
+                }
+            },
+            "March": {
+                "gap": 6, "days": 31,
+                "events": {
+                    3: ("Holika Dahan", "Phalguna Purnima"),
+                    4: ("Holi", "Dhulivandan - Festival of Colors"),
+                    6: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    15: ("Papmochani Ekadashi", "Meena Sankranti"),
+                    16: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    17: ("Masik Shivaratri", "Shiv Aradhana"),
+                    19: ("Gudi Padwa", "Chaitra Navratri, Ugadi, Ghatasthapana"),
+                    20: ("Cheti Chand", "Jhulelal Jayanti"),
+                    26: ("Ram Navmi", "Prabhu Shri Ram Janmotsav"),
+                    27: ("Navratri Parana", "Navratri Conclusion"),
+                    29: ("Kamada Ekadashi", "Fulfillment of Desires"),
+                    30: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi")
+                }
+            },
+            "April": {
+                "gap": 2, "days": 30,
+                "events": {
+                    2: ("Hanuman Jayanti", "Chaitra Purnima Vrat"),
+                    5: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    13: ("Varuthini Ekadashi", "Fortune & Prosperity"),
+                    14: ("Mesha Sankranti", "Solar New Year"),
+                    15: ("Pradosh Vrat (K)", "Masik Shivaratri"),
+                    17: ("Vaishakha Amavasya", "Shani Jayanti (South)"),
+                    19: ("Akshaya Tritiya", "Gold Buying & Charity"),
+                    27: ("Mohini Ekadashi", "Vishnu Mohini Avatar"),
+                    28: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi")
+                }
+            },
+            "May": {
+                "gap": 4, "days": 31,
+                "events": {
+                    1: ("Vaishakha Purnima Vrat", "Buddha Purnima"),
+                    5: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    13: ("Apara Ekadashi", "Infinite Merits"),
+                    14: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    15: ("Masik Shivaratri", "Vrishabha Sankranti"),
+                    16: ("Jyeshtha Amavasya", "Vat Savitri Vrat (Amavasyant)"),
+                    27: ("Padmini Ekadashi", "Kamala Ekadashi"),
+                    28: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    31: ("Purnima Vrat", "Jyeshtha Purnima")
+                }
+            },
+            "June": {
+                "gap": 0, "days": 30,
+                "events": {
+                    3: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    11: ("Parama Ekadashi", "Adhik Maas Special"),
+                    12: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    13: ("Masik Shivaratri", "Shiv Puja"),
+                    15: ("Amavasya", "Mithuna Sankranti"),
+                    25: ("Nirjala Ekadashi", "Pandav Bhim Ekadashi"),
+                    27: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    29: ("Jyeshtha Purnima Vrat", "Vat Purnima")
+                }
+            },
+            "July": {
+                "gap": 2, "days": 31,
+                "events": {
+                    3: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    10: ("Yogini Ekadashi", "Health & Well-being"),
+                    12: ("Pradosh Vrat (K)", "Masik Shivaratri"),
+                    14: ("Ashadha Amavasya", "Deep Puja"),
+                    16: ("Jagannath Rath Yatra", "Karka Sankranti"),
+                    25: ("Deva Shayani Ekadashi", "Ashadhi Ekadashi - Chaturmas Aarambh"),
+                    26: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    29: ("Guru Purnima", "Ashadha Purnima Vrat")
+                }
+            },
+            "August": {
+                "gap": 5, "days": 31,
+                "events": {
+                    2: ("Sankashti Chaturthi", "Ganesh Pujan"),
+                    9: ("Kamika Ekadashi", "Ashadha/Shravan Special"),
+                    10: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    11: ("Masik Shivaratri", "Shiv Aradhana"),
+                    12: ("Shravana Amavasya", "Pithori Amavasya"),
+                    15: ("Hariyali Teej", "Independence Day"),
+                    17: ("Nag Panchami", "Simha Sankranti"),
+                    23: ("Shravana Putrada Ekadashi", "Progeny Luck"),
+                    25: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    26: ("Onam", "Thiruvonam"),
+                    28: ("Raksha Bandhan", "Shravana Purnima Vrat"),
+                    31: ("Sankashti Chaturthi", "Kajari Teej")
+                }
+            },
+            "September": {
+                "gap": 1, "days": 30,
+                "events": {
+                    4: ("Janmashtami", "Shri Krishna Janmotsav"),
+                    7: ("Aja Ekadashi", "King Harishchandra Story"),
+                    8: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    9: ("Masik Shivaratri", "Shiv Aradhana"),
+                    11: ("Bhadrapada Amavasya", "Pitra Paksha Start"),
+                    14: ("Ganesh Chaturthi", "Hartalika Teej"),
+                    17: ("Kanya Sankranti", "Vishwakarma Puja"),
+                    22: ("Parivartini Ekadashi", "Vishnu side-turn date"),
+                    24: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    25: ("Anant Chaturdashi", "Ganesh Visarjan"),
+                    26: ("Bhadrapada Purnima Vrat", "Shradh Start"),
+                    29: ("Sankashti Chaturthi", "Ganesh Pujan")
+                }
+            },
+            "October": {
+                "gap": 3, "days": 31,
+                "events": {
+                    6: ("Indira Ekadashi", "Ancestors Salvation"),
+                    8: ("Pradosh Vrat (K)", "Masik Shivaratri"),
+                    10: ("Ashwin Amavasya", "Sarva Pitru Amavasya"),
+                    11: ("Ghatasthapana", "Sharad Navratri Start"),
+                    16: ("Kalparambha", "Durga Puja Start"),
+                    17: ("Tula Sankranti", "Navpatrika Puja"),
+                    19: ("Durga Ashtami", "Maha Navami Puja"),
+                    20: ("Dussehra", "Sharad Navratri Parana - Vijayadashami"),
+                    21: ("Durga Visarjan", "Sindoor Khela"),
+                    22: ("Papankusha Ekadashi", "Shield from Sins"),
+                    23: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    26: ("Ashwin Purnima Vrat", "Kojagari Lakshmi Puja"),
+                    29: ("Karva Chauth", "Sankashti Chaturthi")
+                }
+            },
+            "November": {
+                "gap": 6, "days": 30,
+                "events": {
+                    5: ("Rama Ekadashi", "Diwali Preparation"),
+                    6: ("Dhanteras", "Pradosh Vrat (K)"),
+                    7: ("Masik Shivaratri", "Shiv Aradhana"),
+                    8: ("Diwali", "Narak Chaturdashi - Festival of Lights"),
+                    9: ("Kartik Amavasya", "Laxmi Pujan"),
+                    10: ("Govardhan Puja", "Annakut"),
+                    11: ("Bhai Dooj", "Yama Dwitiya"),
+                    15: ("Chhath Puja", "Sun Worship"),
+                    16: ("Vrischika Sankranti", "Solar Entry"),
+                    20: ("Devutthana Ekadashi", "Tulsi Vivah Start"),
+                    22: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    24: ("Kartik Purnima Vrat", "Dev Diwali"),
+                    27: ("Sankashti Chaturthi", "Ganesh Pujan")
+                }
+            },
+            "December": {
+                "gap": 1, "days": 31,
+                "events": {
+                    4: ("Utpanna Ekadashi", "Birth of Ekadashi Devi"),
+                    6: ("Pradosh Vrat (K)", "Krishna Paksha Trayodashi"),
+                    7: ("Masik Shivaratri", "Shiv Aradhana"),
+                    8: ("Margashirsha Amavasya", "Pitru Tarpan"),
+                    16: ("Dhanu Sankranti", "Solar Entry"),
+                    20: ("Mokshada Ekadashi", "Gita Jayanti"),
+                    21: ("Pradosh Vrat (S)", "Shukla Paksha Trayodashi"),
+                    23: ("Margashirsha Purnima Vrat", "Dattatreya Jayanti"),
+                    26: ("Sankashti Chaturthi", "Ganesh Pujan")
+                }
+            }
+        }
 
+        # Mahina Selector
+        selected_m = st.selectbox("महीना चुनें:", list(ALL_EVENTS_2026.keys()), index=datetime.now().month-1)
+        m_info = ALL_EVENTS_2026[selected_m]
+
+        # Calendar CSS
+        st.markdown("""
+            <style>
+            .calendar-container {
+                display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+                background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .day-header { text-align: center; font-weight: bold; color: #FF4D00; font-size: 0.8rem; }
+            .date-box {
+                aspect-ratio: 1; border: 1px solid #f8f8f8; border-radius: 12px;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                font-weight: 500; position: relative; transition: 0.2s; font-size: 1rem;
+            }
+            .paksha-txt { font-size: 0.55rem; color: #888; margin-top: 2px; }
+            .event-day { background: #FFF5E6; border: 1.5px solid #FF9933; color: #FF4D00; font-weight: bold; cursor: pointer; }
+            .date-box:hover { transform: scale(1.1); z-index: 5; box-shadow: 0 8px 20px rgba(0,0,0,0.1); background: #FFF; }
+            .event-day:hover { background: #FF4D00 !important; color: white !important; }
+            .hover-msg {
+                visibility: hidden; width: 150px; background: #3e2723; color: white;
+                text-align: center; border-radius: 8px; padding: 8px; position: absolute;
+                bottom: 120%; left: 50%; margin-left: -75px; opacity: 0; transition: 0.3s;
+                font-size: 10px; z-index: 100; line-height: 1.3;
+            }
+            .date-box:hover .hover-msg { visibility: visible; opacity: 1; }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # Days Header
         cols = st.columns(7)
         for i, d in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
-            cols[i].markdown(f"<div class='day-label'>{d}</div>", unsafe_allow_html=True)
+            cols[i].markdown(f"<div class='day-header'>{d}</div>", unsafe_allow_html=True)
 
-        grid_html = '<div class="calendar-wrapper">'
+        # Calendar HTML Grid
+        cal_html = '<div class="calendar-container">'
+        
+        # 1. Start Gap
         for _ in range(m_info["gap"]):
-            grid_html += '<div class="date-cell" style="border:none; opacity:0;"></div>'
+            cal_html += '<div class="date-box" style="border:none; opacity:0;"></div>'
             
+        # 2. All Dates
         for d in range(1, m_info["days"] + 1):
             ev = m_info["events"].get(d)
             paksha = "शुक्ल पक्ष" if d <= 15 else "कृष्ण पक्ष"
-            tithi_label = "पूर्णिमा" if d == 15 else "अमावस्या" if d == m_info["days"] else paksha
+            if d == 15: paksha = "पूर्णिमा"
+            if d == m_info["days"]: paksha = "अमावस्या"
             
             if ev:
-                name, desc = ev
-                tip = f'<div class="event-tip"><b>{name}</b><br>{desc}<br>({tithi_label})</div>'
-                grid_html += f'<div class="date-cell has-event">{d}<div class="paksha-info" style="font-size:0.55rem; color:#888;">{tithi_label}</div>{tip}</div>'
+                name, info = ev
+                msg = f'<div class="hover-msg"><b>{name}</b><br>{info}</div>'
+                cal_html += f'<div class="date-box event-day">{d}<div class="paksha-txt">{paksha}</div>{msg}</div>'
             else:
-                grid_html += f'<div class="date-cell">{d}<div class="paksha-info" style="font-size:0.55rem; color:#888;">{tithi_label}</div></div>'
+                cal_html += f'<div class="date-cell date-box">{d}<div class="paksha-txt">{paksha}</div></div>'
                 
-        grid_html += '</div>'
-        st.markdown(grid_html, unsafe_allow_html=True)
+        cal_html += '</div>'
+        st.markdown(cal_html, unsafe_allow_html=True)
+        st.caption("🚩 टीप: ज्या तारखेला नारंगी बॉर्डर आहे त्यावर माउस नेल्यास सणांची माहिती दिसेल.")
 
     # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
@@ -254,3 +476,4 @@ else:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
