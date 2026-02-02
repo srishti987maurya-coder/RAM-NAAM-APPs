@@ -9,11 +9,12 @@ import urllib.parse
 st.set_page_config(page_title="श्री राम धाम", page_icon="🚩", layout="centered")
 
 # --- DATABASE & CONFIG ---
-DB_FILE = "ram_seva_data.csv"
+# एक्सेल में हिस्ट्री रखने के लिए नई फाइल का नाम
+DB_FILE = "ram_seva_history.csv" 
 MSG_FILE = "broadcast_msg.txt"
 ADMIN_NUMBERS = ["9987621091", "8169513359"] 
 
-# 2026 एकादशी एवं त्यौहार सम्पूर्ण डेटा (पूर्ण एकीकृत सूची)
+# 2026 एकादशी एवं त्यौहार सम्पूर्ण डेटा
 ALL_EVENTS_2026 = {
     "January": {"gap": 3, "days": 31, "events": {1: ("Pradosh Vrat (S)", "Trayodashi"), 3: ("Paush Purnima", "Purnima Vrat"), 6: ("Sankashti Chaturthi", "Ganesh Pujan"), 14: ("Shattila Ekadashi", "Makar Sankranti"), 16: ("Pradosh Vrat (K)", "Masik Shivaratri"), 18: ("Magha Amavasya", "Mauni Amavasya"), 23: ("Basant Panchmi", "Saraswati Puja"), 29: ("Jaya Ekadashi", "Bhami Ekadashi"), 30: ("Pradosh Vrat (S)", "Trayodashi")}},
     "February": {"gap": 6, "days": 28, "events": {1: ("Magha Purnima", "Vrat"), 5: ("Sankashti Chaturthi", "Ganesh Pujan"), 13: ("Vijaya Ekadashi", "Kumbha Sankranti"), 14: ("Pradosh Vrat (K)", "Vrat"), 15: ("Mahashivratri", "Shivaratri"), 17: ("Phalguna Amavasya", "Vrat"), 27: ("Amalaki Ekadashi", "Vrat"), 28: ("Pradosh Vrat (S)", "Vrat")}},
@@ -30,12 +31,10 @@ ALL_EVENTS_2026 = {
 }
 
 def load_db():
-    cols = ["Phone", "Name", "Total_Mala", "Total_Jaap", "Last_Active", "Today_Mala", "Today_Jaap", "Location"]
+    # अब डेटा का ढांचा तारीख-वार होगा ताकि पुराना डेटा डिलीट न हो
+    cols = ["Date", "Phone", "Name", "Mala", "Jaap", "Location"]
     if os.path.exists(DB_FILE):
-        df = pd.read_csv(DB_FILE, dtype={'Phone': str})
-        for c in cols:
-            if c not in df.columns: df[c] = 0 if "Jaap" in c or "Mala" in c else "India"
-        return df
+        return pd.read_csv(DB_FILE, dtype={'Phone': str})
     return pd.DataFrame(columns=cols)
 
 def save_db(df):
@@ -56,7 +55,7 @@ def get_user_location():
         return f"{data.get('city', 'Unknown')}, {data.get('region', 'Unknown')}"
     except: return "India"
 
-# --- PREMIUM INTERACTIVE UI CSS ---
+# --- UI CSS ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(180deg, #FFF5E6 0%, #FFDCA9 100%); }
@@ -109,21 +108,26 @@ if st.session_state.user_session is None:
         if not u_name or len(u_phone) != 10:
             st.error("❌ कृपया सही विवरण भरें।")
         else:
+            # एक्सेल लॉजिक: चेक करें कि क्या यूजर पहले से है
             if u_phone in df['Phone'].values:
                 st.session_state.user_session = u_phone
-                st.rerun()
+                st.session_state.user_name = df[df['Phone'] == u_phone]['Name'].iloc[0]
             else:
-                loc = get_user_location()
                 st.session_state.user_session = u_phone
-                new_user = {"Phone": u_phone, "Name": u_name, "Total_Mala": 0, "Total_Jaap": 0, "Last_Active": today_str, "Today_Mala": 0, "Today_Jaap": 0, "Location": loc}
-                df = pd.concat([df, pd.DataFrame([new_user])], ignore_index=True)
-                save_db(df)
-                st.rerun()
+                st.session_state.user_name = u_name
+            st.rerun()
 
 # --- 2. DASHBOARD ---
 else:
-    user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
-    st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
+    u_phone = st.session_state.user_session
+    u_name = st.session_state.user_name
+    
+    # एक्सेल लॉजिक: यूजर का डेटा कैलकुलेट करना
+    user_history = df[df['Phone'] == u_phone]
+    today_mala = user_history[user_history['Date'] == today_str]['Mala'].sum()
+    total_mala = user_history['Mala'].sum()
+
+    st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {u_name}</div></div>', unsafe_allow_html=True)
 
     b_msg = get_broadcast()
     if b_msg: st.info(f"📢 सन्देश: {b_msg}")
@@ -131,36 +135,43 @@ else:
     tabs = st.tabs(["🏠 मेरी सेवा", "🏆 लीडरबोर्ड", "📅 पावन कैलेंडर"])
 
     with tabs[0]:
-        if df.at[user_idx, 'Last_Active'] != today_str:
-            df.at[user_idx, 'Today_Mala'] = 0
-            df.at[user_idx, 'Today_Jaap'] = 0
-            df.at[user_idx, 'Last_Active'] = today_str
-            save_db(df)
-
-        current_j = int(df.at[user_idx, 'Today_Jaap'])
         st.markdown(f"""
             <div class="metric-box">
-                <h1 style='color:#FF4D00; margin:0; font-size: 4rem;'>{current_j // 108} माला</h1>
-                <p style='color:#666; font-weight: bold;'>आज की कुल सेवा</p>
+                <h1 style='color:#FF4D00; margin:0; font-size: 4rem;'>{int(today_mala)} माला</h1>
+                <p style='color:#666; font-weight: bold;'>आज की सेवा ({today_str})</p>
+                <hr style='border: 0.5px solid #eee;'>
+                <h3 style='color:#FF9933;'>कुल सेवा (Lifetime): {int(total_mala)} माला</h3>
             </div>
         """, unsafe_allow_html=True)
         
-        mode = st.radio("इनपुट तरीका:", ["जाप संख्या (सीधा)", "माला (1 = 108)"], horizontal=True)
+        mode = st.radio("इनपुट तरीका:", ["माला (1 = 108)", "जाप संख्या (सीधा)"], horizontal=True)
         val = st.number_input("संख्या दर्ज करें:", min_value=0, step=1)
         
-        if st.button("➕ सेवा जोड़ें", use_container_width=True):
-            added = val if mode == "जाप संख्या (सीधा)" else (val * 108)
-            df.at[user_idx, 'Today_Jaap'] += added
-            df.at[user_idx, 'Total_Jaap'] += added
-            df.at[user_idx, 'Today_Mala'] = df.at[user_idx, 'Today_Jaap'] // 108
-            df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
-            save_db(df)
-            st.rerun()
+        if st.button("➕ सेवा जमा करें", use_container_width=True):
+            if val > 0:
+                loc = get_user_location()
+                # एक्सेल लॉजिक: नई एंट्री जोड़ना (Purana data overwite nahi hoga)
+                added_mala = val if mode == "माला (1 = 108)" else (val // 108)
+                added_jaap = (val * 108) if mode == "माला (1 = 108)" else val
+                
+                new_entry = {
+                    "Date": today_str,
+                    "Phone": u_phone,
+                    "Name": u_name,
+                    "Mala": added_mala,
+                    "Jaap": added_jaap,
+                    "Location": loc
+                }
+                df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
+                save_db(df)
+                st.success("भगवान श्री राम आपकी सेवा स्वीकार करें!")
+                st.rerun()
 
     with tabs[1]:
         st.subheader("🏆 पावन लीडरबोर्ड (कुल सेवा)")
-        # FIX: Showing ALL users sorted by Total Jaap so count never vanishes
-        leaders = df.sort_values(by="Total_Jaap", ascending=False).head(15)
+        # एक्सेल लॉजिक: ग्रुपिंग करके टोटल दिखाना ताकि लीडरबोर्ड सही रहे
+        leaders = df.groupby(['Phone', 'Name', 'Location'])['Mala'].sum().reset_index()
+        leaders = leaders.sort_values(by="Mala", ascending=False).head(15)
         
         if leaders.empty:
             st.info("🙏 अभी सेवा का आरंभ होना शेष है।")
@@ -179,7 +190,7 @@ else:
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <span style="color:#FF4D00; font-weight:bold; font-size:1.2rem;">{int(row['Total_Mala'])}</span>
+                            <span style="color:#FF4D00; font-weight:bold; font-size:1.2rem;">{int(row['Mala'])}</span>
                             <span style="font-size:0.9rem; color:#444;"> कुल माला</span>
                         </div>
                     </div>
@@ -216,11 +227,12 @@ else:
         st.caption("🚩 टीप: नारंगी बॉर्डर वाले दिनों पर माउस ले जाएं।")
 
     # --- ADMIN SIDEBAR ---
-    if st.session_state.user_session in ADMIN_NUMBERS:
+    if u_phone in ADMIN_NUMBERS:
         with st.sidebar:
             st.subheader("⚙️ एडमिन कंट्रोल")
+            # एक्सेल लॉजिक: पूरी हिस्ट्री डाउनलोड करना
             csv = df.to_csv(index=False).encode('utf-8-sig')
-            st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv')
+            st.download_button("📥 Download Excel Report (History)", data=csv, file_name=f'ram_seva_history_{today_str}.csv', use_container_width=True)
             
             st.divider()
             new_m = st.text_area("ब्रॉडकास्ट सन्देश:", value=get_broadcast())
@@ -229,12 +241,16 @@ else:
                 st.rerun()
             
             st.divider()
-            inactive_today = df[df['Last_Active'] != today_str]
-            if not inactive_today.empty:
-                st.warning(f"⚠️ {len(inactive_today)} पेंडिंग")
-                rem_user_sel = st.selectbox("स्मरण भेजें:", ["--चुनें--"] + inactive_today['Name'].tolist())
+            # रिमाइंडर लॉजिक (जो आज हिस्ट्री में नहीं हैं)
+            entered_today = df[df['Date'] == today_str]['Phone'].unique()
+            all_users = df.groupby('Phone').last().reset_index()
+            pending = all_users[~all_users['Phone'].isin(entered_today)]
+
+            if not pending.empty:
+                st.warning(f"⚠️ {len(pending)} पेंडिंग")
+                rem_user_sel = st.selectbox("स्मरण भेजें:", ["--चुनें--"] + pending['Name'].tolist())
                 if rem_user_sel != "--चुनें--":
-                    u_row = inactive_today[inactive_today['Name'] == rem_user_sel].iloc[0]
+                    u_row = pending[pending['Name'] == rem_user_sel].iloc[0]
                     u_ph = "91" + str(u_row['Phone'])
                     msg_txt = urllib.parse.quote(f"जय श्री राम {rem_user_sel} जी! आज की माला सेवा रिकॉर्ड नहीं हुई है। 🙏🚩")
                     st.markdown(f'<a href="https://wa.me/{u_ph}?text={msg_txt}" target="_blank" style="background:#25D366; color:white; padding:10px; border-radius:10px; text-decoration:none; display:block; text-align:center; font-weight:bold;">💬 WhatsApp</a>', unsafe_allow_html=True)
@@ -242,4 +258,3 @@ else:
     if st.sidebar.button("Logout 🚪"):
         st.session_state.user_session = None
         st.rerun()
-
