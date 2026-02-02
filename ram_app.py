@@ -162,14 +162,51 @@ else:
 
     with tabs[1]:
         st.subheader("🏆 आज के श्रेष्ठ सेवक")
+        
+        # आज का डेटा फ़िल्टर करें और टॉप 10 निकालें
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
-        for i, row in leaders.iterrows():
-            st.markdown(f"""
-                <div style="background:white; padding:15px; border-radius:15px; border-left:5px solid #FF4D00; margin-bottom:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); display:flex; justify-content:space-between;">
-                    <b>{row['Name']} ({row['Location']})</b>
-                    <span style="color:#FF4D00; font-weight:bold;">{row['Today_Mala']} माला</span>
-                </div>
-            """, unsafe_allow_html=True)
+        
+        if leaders.empty:
+            st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है। पहले सेवक बनें!")
+        else:
+            for i, (idx, row) in enumerate(leaders.iterrows()):
+                rank = i + 1
+                # पदक और रंग का चुनाव
+                if rank == 1:
+                    bg_color, medal, border = "#FFD700", "🥇", "3px solid #DAA520" # Gold
+                elif rank == 2:
+                    bg_color, medal, border = "#E0E0E0", "🥈", "2px solid #C0C0C0" # Silver
+                elif rank == 3:
+                    bg_color, medal, border = "#CD7F32", "🥉", "2px solid #A0522D" # Bronze
+                else:
+                    bg_color, medal, border = "white", "💠", "1px solid #eee"
+
+                # इंटरएक्टिव कार्ड डिज़ाइन (केवल नाम और लोकेशन)
+                st.markdown(f"""
+                    <div style="
+                        background: {bg_color};
+                        padding: 15px 20px;
+                        border-radius: 15px;
+                        border: {border};
+                        margin-bottom: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+                    ">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 1.5rem;">{medal}</span>
+                            <div>
+                                <b style="font-size: 1.1rem; color: #333;">{row['Name']}</b><br>
+                                <small style="color: #666;">📍 {row['Location']}</small>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 1.2rem; font-weight: bold; color: #FF4D00;">{int(row['Today_Mala'])}</span>
+                            <span style="font-size: 0.9rem; color: #444;"> माला</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
 
     with tabs[2]:
         st.subheader("📅 पावन कैलेंडर 2026")
@@ -241,4 +278,5 @@ else:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
 
