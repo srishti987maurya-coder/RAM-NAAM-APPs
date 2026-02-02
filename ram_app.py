@@ -255,7 +255,7 @@ with tabs[2]:
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
         st.caption("🚩 Ab aap sabhi dates, paksha aur tyohar dekh sakte hain.")
-
+    
     # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
@@ -292,5 +292,6 @@ with tabs[2]:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
 
 
