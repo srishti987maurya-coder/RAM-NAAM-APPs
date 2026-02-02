@@ -160,7 +160,7 @@ else:
                 save_db(df)
                 st.rerun()
 
-    with tabs[1]:
+   with tabs[1]:
         st.subheader("🏆 आज के श्रेष्ठ सेवक")
         
         # आज का डेटा फ़िल्टर करें और टॉप 10 निकालें
@@ -171,7 +171,7 @@ else:
         else:
             for i, (idx, row) in enumerate(leaders.iterrows()):
                 rank = i + 1
-                # पदक और रंग का चुनाव
+                # पदक और रंगों का निर्धारण
                 if rank == 1:
                     bg_color, medal, border = "#FFD700", "🥇", "3px solid #DAA520" # Gold
                 elif rank == 2:
@@ -181,7 +181,7 @@ else:
                 else:
                     bg_color, medal, border = "white", "💠", "1px solid #eee"
 
-                # इंटरएक्टिव कार्ड डिज़ाइन (केवल नाम और लोकेशन)
+                # इंटरएक्टिव कार्ड डिज़ाइन (📍 Location के साथ)
                 st.markdown(f"""
                     <div style="
                         background: {bg_color};
@@ -278,5 +278,6 @@ else:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
 
 
