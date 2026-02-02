@@ -190,72 +190,34 @@ else:
                     </div>
                 """, unsafe_allow_html=True)
 
-with tabs[2]:
+    with tabs[2]:
         st.subheader("📅 पावन तिथि कैलेंडर 2026")
-        
-        # Mahina chunne ka option
         sel_m = st.selectbox("महीना चुनें:", list(CAL_DATA_2026.keys()), index=datetime.now().month-1)
         m_info = CAL_DATA_2026[sel_m]
 
-        # CSS for Full Calendar Grid
-        st.markdown("""
-            <style>
-            .calendar-wrapper {
-                display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
-                background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            }
-            .day-label { text-align: center; font-weight: bold; color: #FF4D00; font-size: 0.8rem; }
-            .date-cell {
-                aspect-ratio: 1; border: 1px solid #f8f8f8; border-radius: 12px;
-                display: flex; flex-direction: column; align-items: center; justify-content: center;
-                font-weight: 500; position: relative; transition: 0.2s; font-size: 1rem;
-            }
-            .paksha-info { font-size: 0.55rem; color: #888; margin-top: 2px; }
-            .has-event { background: #FFF5E6; border: 1.5px solid #FF9933; color: #FF4D00; font-weight: bold; cursor: pointer; }
-            .date-cell:hover { transform: scale(1.1); z-index: 5; box-shadow: 0 8px 20px rgba(0,0,0,0.1); background: #FFF; }
-            .has-event:hover { background: #FF4D00 !important; color: white !important; }
-            .event-tip {
-                visibility: hidden; width: 150px; background: #3e2723; color: white;
-                text-align: center; border-radius: 8px; padding: 8px; position: absolute;
-                bottom: 120%; left: 50%; margin-left: -75px; opacity: 0; transition: 0.3s;
-                font-size: 10px; z-index: 100; line-height: 1.3;
-            }
-            .date-cell:hover .event-tip { visibility: visible; opacity: 1; }
-            </style>
-        """, unsafe_allow_html=True)
-
-        # Days Header
         cols = st.columns(7)
         for i, d in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
             cols[i].markdown(f"<div class='day-label'>{d}</div>", unsafe_allow_html=True)
 
-        # Calendar HTML Grid
         grid_html = '<div class="calendar-wrapper">'
-        
-        # 1. Starting Gap (Khali box)
         for _ in range(m_info["gap"]):
             grid_html += '<div class="date-cell" style="border:none; opacity:0;"></div>'
             
-        # 2. All Dates (1 to 30/31)
         for d in range(1, m_info["days"] + 1):
             ev = m_info["events"].get(d)
-            
-            # Shukla/Krishna Paksha Calculation
-            # 1-15: Shukla, 16-End: Krishna
             paksha = "शुक्ल पक्ष" if d <= 15 else "कृष्ण पक्ष"
             tithi_label = "पूर्णिमा" if d == 15 else "अमावस्या" if d == m_info["days"] else paksha
             
             if ev:
                 name, desc = ev
                 tip = f'<div class="event-tip"><b>{name}</b><br>{desc}<br>({tithi_label})</div>'
-                grid_html += f'<div class="date-cell has-event">{d}<div class="paksha-info">{tithi_label}</div>{tip}</div>'
+                grid_html += f'<div class="date-cell has-event">{d}<div class="paksha-info" style="font-size:0.55rem; color:#888;">{tithi_label}</div>{tip}</div>'
             else:
-                grid_html += f'<div class="date-cell">{d}<div class="paksha-info">{tithi_label}</div></div>'
+                grid_html += f'<div class="date-cell">{d}<div class="paksha-info" style="font-size:0.55rem; color:#888;">{tithi_label}</div></div>'
                 
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
-        st.caption("🚩 Ab aap sabhi dates, paksha aur tyohar dekh sakte hain.")
-    
+
     # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
@@ -278,11 +240,11 @@ with tabs[2]:
             inactive_today = df[df['Last_Active'] != today_str]
             if not inactive_today.empty:
                 st.warning(f"⚠️ {len(inactive_today)} ने सेवा नहीं जोड़ी है।")
-                rem_user = st.selectbox("स्मरण भेजें:", ["--भक्त चुनें--"] + inactive_today['Name'].tolist())
-                if rem_user != "--भक्त चुनें--":
-                    u_row = inactive_today[inactive_today['Name'] == rem_user].iloc[0]
+                rem_user_sel = st.selectbox("स्मरण भेजें:", ["--भक्त चुनें--"] + inactive_today['Name'].tolist())
+                if rem_user_sel != "--भक्त चुनें--":
+                    u_row = inactive_today[inactive_today['Name'] == rem_user_sel].iloc[0]
                     u_ph = "91" + str(u_row['Phone'])
-                    msg_txt = urllib.parse.quote(f"जय श्री राम {rem_user} जी! आज आपकी माला सेवा रिकॉर्ड नहीं हुई है। 🙏🚩")
+                    msg_txt = urllib.parse.quote(f"जय श्री राम {rem_user_sel} जी! आज आपकी माला सेवा रिकॉर्ड नहीं हुई है। 🙏🚩")
                     st.markdown(f'<a href="https://wa.me/{u_ph}?text={msg_txt}" target="_blank" style="background:#25D366; color:white; padding:10px; border-radius:10px; text-decoration:none; display:block; text-align:center; font-weight:bold;">💬 WhatsApp Reminder</a>', unsafe_allow_html=True)
 
             st.divider()
@@ -292,6 +254,3 @@ with tabs[2]:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
-
-
-
