@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime
 import requests
+import urllib.parse
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="श्री राम धाम", page_icon="🚩", layout="centered")
@@ -84,7 +85,7 @@ today_str = datetime.now().strftime("%Y-%m-%d")
 if 'user_session' not in st.session_state:
     st.session_state.user_session = None
 
-# --- 1. STRICT LOGIN ---
+# --- 1. LOGIN ---
 if st.session_state.user_session is None:
     st.markdown('<div class="app-header"><h1>🚩 श्री राम धाम </h1><div>प्रमाणित जाप सेवा</div></div>', unsafe_allow_html=True)
     u_name = st.text_input("आपका पावन नाम").strip()
@@ -116,7 +117,6 @@ else:
     user_idx = df[df['Phone'] == st.session_state.user_session].index[0]
     st.markdown(f'<div class="app-header"><h1>🚩 श्री राम धाम</h1><div>जय श्री राम, {df.at[user_idx, "Name"]}</div></div>', unsafe_allow_html=True)
 
-    # Ekadashi/Broadcast Alert
     b_msg = get_broadcast()
     if b_msg: st.info(f"📢 सन्देश: {b_msg}")
     
@@ -151,7 +151,7 @@ else:
                 save_db(df)
                 st.rerun()
         with c2:
-            if st.button("✏️ सुधारें (Reset)", use_container_width=True):
+            if st.button("✏️ सुधार करें (Reset)", use_container_width=True):
                 new_j = val if mode == "जाप संख्या (सीधा)" else (val * 108)
                 df.at[user_idx, 'Total_Jaap'] = (df.at[user_idx, 'Total_Jaap'] - current_j) + new_j
                 df.at[user_idx, 'Total_Mala'] = df.at[user_idx, 'Total_Jaap'] // 108
@@ -160,28 +160,20 @@ else:
                 save_db(df)
                 st.rerun()
 
-  with tabs[1]:
+    with tabs[1]:
         st.subheader("🏆 आज के श्रेष्ठ सेवक")
-        
-        # आज का डेटा फ़िल्टर करना
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         
         if leaders.empty:
             st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है।")
         else:
             for i, row in leaders.iterrows():
-                # रैंक के अनुसार पदक (Medal) तय करना
                 rank = leaders.index.get_loc(i) + 1
-                if rank == 1:
-                    bg, medal, brd = "#FFD700", "🥇", "3px solid #DAA520"
-                elif rank == 2:
-                    bg, medal, brd = "#E0E0E0", "🥈", "2px solid #C0C0C0"
-                elif rank == 3:
-                    bg, medal, brd = "#CD7F32", "🥉", "2px solid #A0522D"
-                else:
-                    bg, medal, brd = "white", "💠", "1px solid #eee"
+                bg, medal, brd = ("#FFD700", "🥇", "3px solid #DAA520") if rank == 1 else \
+                                 ("#E0E0E0", "🥈", "2px solid #C0C0C0") if rank == 2 else \
+                                 ("#CD7F32", "🥉", "2px solid #A0522D") if rank == 3 else \
+                                 ("white", "💠", "1px solid #eee")
                 
-                # कार्ड का डिज़ाइन (लोकेशन के साथ)
                 st.markdown(f"""
                     <div style="background:{bg}; padding:15px; border-radius:15px; border:{brd}; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                         <div style="display:flex; align-items:center; gap:12px;">
@@ -197,6 +189,7 @@ else:
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
+
     with tabs[2]:
         st.subheader("📅 पावन कैलेंडर 2026")
         sel_m = st.selectbox("महीना चुनें:", list(CAL_DATA_2026.keys()), index=datetime.now().month-1)
@@ -204,6 +197,7 @@ else:
         cols = st.columns(7)
         for i, d in enumerate(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]):
             cols[i].markdown(f"<div class='day-label'>{d}</div>", unsafe_allow_html=True)
+        
         grid_html = '<div class="calendar-wrapper">'
         for _ in range(m_info["gap"]): grid_html += '<div class="date-cell" style="border:none;"></div>'
         for d in range(1, m_info["days"] + 1):
@@ -214,12 +208,10 @@ else:
         grid_html += '</div>'
         st.markdown(grid_html, unsafe_allow_html=True)
 
- # --- ADMIN SIDEBAR ---
+    # --- ADMIN SIDEBAR ---
     if st.session_state.user_session in ADMIN_NUMBERS:
         with st.sidebar:
             st.subheader("⚙️ एडमिन कंट्रोल")
-            
-            # 1. यूजर डिलीट करें
             u_list = ["--चुनें--"] + list(df['Name'] + " (" + df['Phone'] + ")")
             target = st.selectbox("यूजर डिलीट करें:", u_list)
             if target != "--चुनें--" and st.button("🗑️ डिलीट"):
@@ -228,48 +220,27 @@ else:
                 st.rerun()
             
             st.divider()
-            
-            # 2. ब्रॉडकास्ट सन्देश
             new_m = st.text_area("ब्रॉडकास्ट सन्देश:", value=get_broadcast())
             if st.button("📢 सन्देश अपडेट करें"):
                 save_broadcast(new_m)
                 st.rerun()
-                
-            st.divider()
             
-            # 3. रिमाइंडर फीचर (जिन्होंने आज माला नहीं जोड़ी)
+            st.divider()
             st.subheader("🔔 सेवा स्मरण (Reminders)")
             inactive_today = df[df['Last_Active'] != today_str]
-            
             if not inactive_today.empty:
-                st.warning(f"⚠️ {len(inactive_today)} भक्तों ने आज माला नहीं जोड़ी है।")
-                
-                # चुनिंदा भक्त को WhatsApp मैसेज भेजने का विकल्प
-                rem_user = st.selectbox("स्मरण भेजने के लिए चुनें:", ["--भक्त चुनें--"] + inactive_today['Name'].tolist())
-                
+                st.warning(f"⚠️ {len(inactive_today)} ने सेवा नहीं जोड़ी है।")
+                rem_user = st.selectbox("स्मरण भेजें:", ["--भक्त चुनें--"] + inactive_today['Name'].tolist())
                 if rem_user != "--भक्त चुनें--":
                     u_row = inactive_today[inactive_today['Name'] == rem_user].iloc[0]
-                    u_phone = "91" + str(u_row['Phone'])
-                    msg = urllib.parse.quote(f"जय श्री राम {rem_user} जी! आज आपकी माला सेवा अभी तक रिकॉर्ड नहीं हुई है। कृपया अपनी सेवा श्री राम धाम ऐप पर दर्ज करें। 🙏🚩")
-                    wa_link = f"https://wa.me/{u_phone}?text={msg}"
-                    
-                    st.markdown(f'<a href="{wa_link}" target="_blank" class="wa-btn" style="display: block; text-align: center; background: #25D366; color: white; padding: 10px; border-radius: 10px; text-decoration: none; font-weight: bold;">💬 WhatsApp पर याद दिलाएं</a>', unsafe_allow_html=True)
-            else:
-                st.success("✅ आज सभी ने सेवा दर्ज की है!")
+                    u_ph = "91" + str(u_row['Phone'])
+                    msg_txt = urllib.parse.quote(f"जय श्री राम {rem_user} जी! आज आपकी माला सेवा रिकॉर्ड नहीं हुई है। 🙏🚩")
+                    st.markdown(f'<a href="https://wa.me/{u_ph}?text={msg_txt}" target="_blank" style="background:#25D366; color:white; padding:10px; border-radius:10px; text-decoration:none; display:block; text-align:center; font-weight:bold;">💬 WhatsApp Reminder</a>', unsafe_allow_html=True)
 
             st.divider()
-            
-            # 4. एक्सेल डाउनलोड
             csv = df.to_csv(index=False).encode('utf-8-sig')
             st.download_button("📥 Excel Download", data=csv, file_name='ram_data.csv', use_container_width=True)
 
-    # Logout Button
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
-
-
-
-
-
-
