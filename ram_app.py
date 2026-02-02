@@ -163,37 +163,40 @@ else:
    with tabs[1]:
         st.subheader("🏆 आज के श्रेष्ठ सेवक")
         
-        # आज का डेटा फ़िल्टर करें और टॉप 10 निकालें
+        # आज का डेटा फ़िल्टर करना
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         
         if leaders.empty:
             st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है।")
         else:
-            for i, (idx, row) in enumerate(leaders.iterrows()):
-                rank = i + 1
-                # डिज़ाइन कलर्स
-                bg, medal, brd = ("#FFD700", "🥇", "3px solid #DAA520") if rank == 1 else \
-                                 ("#E0E0E0", "🥈", "2px solid #C0C0C0") if rank == 2 else \
-                                 ("#CD7F32", "🥉", "2px solid #A0522D") if rank == 3 else \
-                                 ("white", "💠", "1px solid #eee")
+            for i, row in leaders.iterrows():
+                # रैंक के अनुसार पदक (Medal) तय करना
+                rank = leaders.index.get_loc(i) + 1
+                if rank == 1:
+                    bg, medal, brd = "#FFD700", "🥇", "3px solid #DAA520"
+                elif rank == 2:
+                    bg, medal, brd = "#E0E0E0", "🥈", "2px solid #C0C0C0"
+                elif rank == 3:
+                    bg, medal, brd = "#CD7F32", "🥉", "2px solid #A0522D"
+                else:
+                    bg, medal, brd = "white", "💠", "1px solid #eee"
                 
-                # यहाँ केवल लीडरबोर्ड का डेटा दिखा रहे हैं (बिना किसी वेरिएबल एरर के)
+                # कार्ड का डिज़ाइन (लोकेशन के साथ)
                 st.markdown(f"""
                     <div style="background:{bg}; padding:15px; border-radius:15px; border:{brd}; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                         <div style="display:flex; align-items:center; gap:12px;">
                             <span style="font-size:1.5rem;">{medal}</span>
                             <div>
-                                <b style="font-size:1.1rem;">{row['Name']}</b><br>
+                                <b style="font-size:1.1rem; color:#333;">{row['Name']}</b><br>
                                 <small style="color:#666;">📍 {row['Location']}</small>
                             </div>
                         </div>
                         <div style="text-align:right;">
                             <span style="color:#FF4D00; font-weight:bold; font-size:1.2rem;">{int(row['Today_Mala'])}</span>
-                            <span style="font-size:0.9rem;"> माला</span>
+                            <span style="font-size:0.9rem; color:#444;"> माला</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
-
     with tabs[2]:
         st.subheader("📅 पावन कैलेंडर 2026")
         sel_m = st.selectbox("महीना चुनें:", list(CAL_DATA_2026.keys()), index=datetime.now().month-1)
@@ -264,6 +267,7 @@ else:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
 
 
 
