@@ -167,43 +167,29 @@ else:
         leaders = df[df['Last_Active'] == today_str].sort_values(by="Today_Jaap", ascending=False).head(10)
         
         if leaders.empty:
-            st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है। पहले सेवक बनें!")
+            st.info("🙏 अभी आज की सेवा का आरंभ होना शेष है।")
         else:
             for i, (idx, row) in enumerate(leaders.iterrows()):
                 rank = i + 1
-                # पदक और रंगों का निर्धारण
-                if rank == 1:
-                    bg_color, medal, border = "#FFD700", "🥇", "3px solid #DAA520" # Gold
-                elif rank == 2:
-                    bg_color, medal, border = "#E0E0E0", "🥈", "2px solid #C0C0C0" # Silver
-                elif rank == 3:
-                    bg_color, medal, border = "#CD7F32", "🥉", "2px solid #A0522D" # Bronze
-                else:
-                    bg_color, medal, border = "white", "💠", "1px solid #eee"
-
-                # इंटरएक्टिव कार्ड डिज़ाइन (📍 Location के साथ)
+                # डिज़ाइन कलर्स
+                bg, medal, brd = ("#FFD700", "🥇", "3px solid #DAA520") if rank == 1 else \
+                                 ("#E0E0E0", "🥈", "2px solid #C0C0C0") if rank == 2 else \
+                                 ("#CD7F32", "🥉", "2px solid #A0522D") if rank == 3 else \
+                                 ("white", "💠", "1px solid #eee")
+                
+                # यहाँ केवल लीडरबोर्ड का डेटा दिखा रहे हैं (बिना किसी वेरिएबल एरर के)
                 st.markdown(f"""
-                    <div style="
-                        background: {bg_color};
-                        padding: 15px 20px;
-                        border-radius: 15px;
-                        border: {border};
-                        margin-bottom: 10px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-                    ">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <span style="font-size: 1.5rem;">{medal}</span>
+                    <div style="background:{bg}; padding:15px; border-radius:15px; border:{brd}; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <span style="font-size:1.5rem;">{medal}</span>
                             <div>
-                                <b style="font-size: 1.1rem; color: #333;">{row['Name']}</b><br>
-                                <small style="color: #666;">📍 {row['Location']}</small>
+                                <b style="font-size:1.1rem;">{row['Name']}</b><br>
+                                <small style="color:#666;">📍 {row['Location']}</small>
                             </div>
                         </div>
-                        <div style="text-align: right;">
-                            <span style="font-size: 1.2rem; font-weight: bold; color: #FF4D00;">{int(row['Today_Mala'])}</span>
-                            <span style="font-size: 0.9rem; color: #444;"> माला</span>
+                        <div style="text-align:right;">
+                            <span style="color:#FF4D00; font-weight:bold; font-size:1.2rem;">{int(row['Today_Mala'])}</span>
+                            <span style="font-size:0.9rem;"> माला</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -278,6 +264,7 @@ else:
     if st.sidebar.button("Logout 🚪", use_container_width=True):
         st.session_state.user_session = None
         st.rerun()
+
 
 
 
